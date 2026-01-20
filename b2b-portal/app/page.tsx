@@ -3,21 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-interface Circuit {
-  id: string;
-  name: string;
-  slug: string;
-  continent: string;
-  nights: string;
-  mainImage: string;
-  prices: {
-    double: number | null;
-    single: number | null;
-    allOptions: any[];
-  };
-  departures: any[];
-}
+import { createClient } from '@/lib/supabase/client';
+import type { Circuit } from '@/lib/types/database';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 export default function HomePage() {
   const [circuits, setCircuits] = useState<Circuit[]>([]);
@@ -28,23 +17,36 @@ export default function HomePage() {
   const [selectedContinent, setSelectedContinent] = useState('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [nightsFilter, setNightsFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('name'); // name, price-asc, price-desc, popular
+  const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  // Load circuits
+  // Load circuits from Supabase
   useEffect(() => {
     async function loadCircuits() {
       try {
-        const response = await fetch('/api/circuits');
-        if (response.ok) {
-          const data = await response.json();
-          console.log('🔍 API Response:', {
-            total: data.circuits?.length,
-            africa: data.circuits?.filter((c: any) => c.continent === 'africa').length,
-            oceania: data.circuits?.filter((c: any) => c.continent === 'oceania').length
-          });
-          setCircuits(data.circuits || []);
+        const supabase = createClient();
+        
+        const { data, error } = await supabase
+          .from('circuits')
+          .select(`
+            *,
+            departures (
+              id,
+              departure_date,
+              return_date,
+              price,
+              status
+            )
+          `)
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Supabase error:', error);
+          return;
         }
+
+        setCircuits(data || []);
       } catch (error) {
         console.error('Error loading circuits:', error);
       } finally {
@@ -58,7 +60,7 @@ export default function HomePage() {
   const stats = useMemo(() => {
     const continents = new Set(circuits.map(c => c.continent));
     const totalDepartures = circuits.reduce((sum, c) => sum + (c.departures?.length || 0), 0);
-    const avgPrice = circuits.reduce((sum, c) => sum + (c.prices.double || 0), 0) / circuits.length;
+    const avgPrice = circuits.reduce((sum, c) => sum + (c.price_double || 0), 0) / circuits.length;
     
     return {
       totalCircuits: circuits.length,
@@ -72,14 +74,6 @@ export default function HomePage() {
   const filteredCircuits = useMemo(() => {
     let filtered = circuits;
     
-    console.log('🔍 Filtering:', {
-      total: circuits.length,
-      selectedContinent,
-      searchQuery,
-      priceRange,
-      nightsFilter
-    });
-    
     // Search
     if (searchQuery) {
       filtered = filtered.filter(c => 
@@ -90,27 +84,21 @@ export default function HomePage() {
     
     // Continent
     if (selectedContinent !== 'all') {
-      const beforeFilter = filtered.length;
       filtered = filtered.filter(c => 
         c.continent.toLowerCase() === selectedContinent.toLowerCase()
       );
-      console.log(`  After continent filter (${selectedContinent}):`, {
-        before: beforeFilter,
-        after: filtered.length,
-        sample: filtered.slice(0, 3).map(c => c.name)
-      });
     }
     
     // Price Range
     filtered = filtered.filter(c => {
-      const price = c.prices.double || 0;
+      const price = c.price_double || 0;
       return price >= priceRange[0] && price <= priceRange[1];
     });
     
     // Nights
     if (nightsFilter !== 'all') {
       filtered = filtered.filter(c => {
-        const nights = parseInt(c.nights.match(/\d+/)?.[0] || '0');
+        const nights = parseInt(c.nights?.match(/\d+/)?.[0] || '0');
         if (nightsFilter === '5-7') return nights >= 5 && nights <= 7;
         if (nightsFilter === '8-10') return nights >= 8 && nights <= 10;
         if (nightsFilter === '11+') return nights >= 11;
@@ -121,8 +109,8 @@ export default function HomePage() {
     // Sort
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'price-asc') return (a.prices.double || 0) - (b.prices.double || 0);
-      if (sortBy === 'price-desc') return (b.prices.double || 0) - (a.prices.double || 0);
+      if (sortBy === 'price-asc') return (a.price_double || 0) - (b.price_double || 0);
+      if (sortBy === 'price-desc') return (b.price_double || 0) - (a.price_double || 0);
       if (sortBy === 'popular') return (b.departures?.length || 0) - (a.departures?.length || 0);
       return 0;
     });
@@ -154,31 +142,7 @@ export default function HomePage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl font-bold">
-                <span className="text-orange-500">J'INFO</span>
-                <span className="text-blue-600"> B2B</span>
-              </div>
-              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                Portal Agenții
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                📞 Contact
-              </button>
-              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
-                Cont Agenție
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
       
       {/* Hero Stats */}
       <div className="bg-gradient-to-r from-blue-600 to-orange-500 text-white py-8">
@@ -353,10 +317,11 @@ export default function HomePage() {
         ) : (
           <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
             {filteredCircuits.map((circuit) => {
-              const basePrice = circuit.prices.double || 0;
+              const basePrice = circuit.price_double || 0;
               const agencyPrice = Math.round(basePrice - (basePrice * agencyCommission / 100));
               const savings = Math.round(basePrice - agencyPrice);
-              const nightsCount = circuit.nights.match(/\d+/)?.[0] || 'N/A';
+              const nightsCount = circuit.nights?.match(/\d+/)?.[0] || 'N/A';
+              const priceOptionsCount = Array.isArray(circuit.price_options) ? circuit.price_options.length : 0;
               
               if (viewMode === 'list') {
                 return (
@@ -367,9 +332,9 @@ export default function HomePage() {
                   >
                     <div className="flex">
                       <div className="relative w-64 h-48 flex-shrink-0">
-                        {circuit.mainImage && (
+                        {circuit.main_image && (
                           <Image
-                            src={circuit.mainImage}
+                            src={circuit.main_image}
                             alt={circuit.name}
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -394,7 +359,7 @@ export default function HomePage() {
                               📅 {circuit.departures?.length || 0} plecări
                             </span>
                             <span className="inline-flex items-center gap-1 text-sm text-gray-600">
-                              💰 {circuit.prices.allOptions?.length || 0} opțiuni preț
+                              💰 {priceOptionsCount} opțiuni preț
                             </span>
                           </div>
                         </div>
@@ -429,9 +394,9 @@ export default function HomePage() {
                   className="block bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group"
                 >
                   <div className="relative h-56">
-                    {circuit.mainImage && (
+                    {circuit.main_image && (
                       <Image
-                        src={circuit.mainImage}
+                        src={circuit.main_image}
                         alt={circuit.name}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -460,7 +425,7 @@ export default function HomePage() {
                         📅 {circuit.departures?.length || 0} plecări
                       </span>
                       <span className="flex items-center gap-1">
-                        💰 {circuit.prices.allOptions?.length || 0} opțiuni
+                        💰 {priceOptionsCount} opțiuni
                       </span>
                     </div>
                     
@@ -497,17 +462,7 @@ export default function HomePage() {
         )}
       </main>
       
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-400 text-sm">
-            © 2026 J'Info Tours - Portal B2B pentru Agenții de Turism
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Toate prețurile includ comisionul agenției de {agencyCommission}%
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
