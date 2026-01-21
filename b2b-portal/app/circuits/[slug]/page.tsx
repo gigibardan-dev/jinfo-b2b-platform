@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 
 async function getCircuit(slug: string) {
   const supabase = await createClient();
-  
+
   const { data: circuit, error } = await supabase
     .from('circuits')
     .select(`
@@ -33,22 +33,22 @@ async function getCircuit(slug: string) {
   return circuit as Circuit & { departures: Departure[] };
 }
 
-export default async function CircuitPage({ 
-  params 
-}: { 
-  params: Promise<{ slug: string }> 
+export default async function CircuitPage({
+  params
+}: {
+  params: Promise<{ slug: string }>
 }) {
   const { slug } = await params;
   const circuit = await getCircuit(slug);
-  
+
   if (!circuit) {
     notFound();
   }
-  
+
   const agencyCommission = 10;
   const basePrice = circuit.price_double || 0;
   const agencyPrice = Math.round(basePrice - (basePrice * agencyCommission / 100));
-  
+
   // Grupează plecările pe luni (compact - doar lunile cu cel mai mic preț)
   const departuresByMonth: Record<string, {
     month: string;
@@ -60,7 +60,7 @@ export default async function CircuitPage({
   circuit.departures?.forEach((dep) => {
     const date = new Date(dep.departure_date);
     const monthKey = date.toLocaleDateString('ro-RO', { month: 'long', year: 'numeric' });
-    
+
     if (!departuresByMonth[monthKey]) {
       departuresByMonth[monthKey] = {
         month: monthKey,
@@ -69,10 +69,10 @@ export default async function CircuitPage({
         count: 0
       };
     }
-    
+
     departuresByMonth[monthKey].departures.push(dep);
     departuresByMonth[monthKey].count++;
-    
+
     if (dep.price && dep.price < departuresByMonth[monthKey].minPrice) {
       departuresByMonth[monthKey].minPrice = dep.price;
     }
@@ -80,17 +80,17 @@ export default async function CircuitPage({
 
   const monthGroups = Object.values(departuresByMonth);
   const priceOptions = Array.isArray(circuit.price_options) ? circuit.price_options : [];
-  
+
   return (
     <>
       <Header />
-      
+
       <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
           <div className="mb-6">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="text-orange-500 hover:text-orange-600 flex items-center gap-2 font-medium transition-colors"
             >
               <span>←</span> Înapoi la circuite
@@ -122,7 +122,7 @@ export default async function CircuitPage({
                   </span>
                 </div>
               </div>
-              
+
               {/* Image Gallery */}
               <div className="bg-white rounded-xl overflow-hidden shadow-sm">
                 {circuit.main_image && (
@@ -136,7 +136,7 @@ export default async function CircuitPage({
                     />
                   </div>
                 )}
-                
+
                 {Array.isArray(circuit.gallery) && circuit.gallery.length > 1 && (
                   <div className="p-4">
                     <div className="grid grid-cols-4 gap-2">
@@ -154,7 +154,7 @@ export default async function CircuitPage({
                   </div>
                 )}
               </div>
-              
+
               {/* Description */}
               {circuit.short_description && (
                 <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -166,9 +166,9 @@ export default async function CircuitPage({
                     {circuit.short_description}
                   </p>
                   {circuit.url && (
-                    <a 
-                      href={circuit.url} 
-                      target="_blank" 
+                    <a
+                      href={circuit.url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium transition-colors"
                     >
@@ -178,14 +178,14 @@ export default async function CircuitPage({
                   )}
                 </div>
               )}
-              
+
               {/* Plecări disponibile - COMPACT cu TOATE OPȚIUNILE */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <span>📅</span>
                   <span>Plecări disponibile</span>
                 </h2>
-                
+
                 <div className="space-y-3">
                   {monthGroups.map((group, idx) => (
                     <details key={idx} className="group border-2 border-gray-200 rounded-xl overflow-hidden hover:border-orange-300 transition-colors">
@@ -202,7 +202,7 @@ export default async function CircuitPage({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-4">
                             <div className="text-right">
                               <div className="text-sm text-gray-500">De la:</div>
@@ -216,13 +216,13 @@ export default async function CircuitPage({
                           </div>
                         </div>
                       </summary>
-                      
+
                       <div className="p-4 bg-gray-50 border-t border-gray-200">
                         <div className="space-y-4">
                           {group.departures.map((dep, i) => {
                             const depDate = new Date(dep.departure_date);
                             const retDate = new Date(dep.return_date);
-                            
+
                             return (
                               <div key={i} className="bg-white rounded-lg p-4 border border-gray-200">
                                 {/* Header Date */}
@@ -231,12 +231,12 @@ export default async function CircuitPage({
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                     <div>
                                       <div className="font-semibold text-gray-900">
-                                        {depDate.toLocaleDateString('ro-RO', { 
+                                        {depDate.toLocaleDateString('ro-RO', {
                                           day: 'numeric',
                                           month: 'long'
                                         })}
                                         <span className="text-orange-500 mx-2">→</span>
-                                        {retDate.toLocaleDateString('ro-RO', { 
+                                        {retDate.toLocaleDateString('ro-RO', {
                                           day: 'numeric',
                                           month: 'long',
                                           year: 'numeric'
@@ -257,9 +257,9 @@ export default async function CircuitPage({
                                   {priceOptions.map((option: any, optIdx: number) => {
                                     const optPrice = option.price || 0;
                                     const agencyOptPrice = Math.round(optPrice - (optPrice * agencyCommission / 100));
-                                    
+
                                     return (
-                                      <div 
+                                      <div
                                         key={optIdx}
                                         className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 hover:border-orange-300 transition-colors"
                                       >
@@ -273,7 +273,7 @@ export default async function CircuitPage({
                                             </div>
                                           )}
                                         </div>
-                                        
+
                                         <div className="text-right flex flex-col items-end gap-1">
                                           <div className="text-xl font-bold text-orange-500">
                                             {agencyOptPrice} {option.currency || 'EUR'}
@@ -318,24 +318,24 @@ export default async function CircuitPage({
                       Program zilnic, servicii incluse/neincluse, excursii opționale
                     </p>
                   </div>
-                  
+
                   <div className="relative">
                     <iframe
                       src={circuit.url}
                       className="w-full border-0 bg-white"
-                      style={{ 
+                      style={{
                         minHeight: '1500px',
                         height: 'auto'
                       }}
                       title="Detalii circuit complet"
                       loading="lazy"
                     />
-                    
+
                     <div className="p-4 bg-white border-t border-gray-200 flex items-center justify-between">
                       <span className="text-sm text-gray-600">
                         💡 Conținut preluat direct de pe jinfotours.ro
                       </span>
-                      <a 
+                      <a
                         href={circuit.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -349,7 +349,7 @@ export default async function CircuitPage({
                 </div>
               )}
             </div>
-            
+
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Price Card - FIX OVERFLOW */}
@@ -362,7 +362,7 @@ export default async function CircuitPage({
                   </div>
                   <div className="text-sm text-gray-600 mt-2">per persoană în cameră dublă</div>
                 </div>
-                
+
                 <div className="border-t border-b border-gray-200 py-4 my-4 space-y-3 text-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Preț public:</span>
@@ -377,16 +377,19 @@ export default async function CircuitPage({
                     <span className="text-xl font-bold text-green-600">{Math.round(basePrice - agencyPrice)} EUR</span>
                   </div>
                 </div>
-                
-                <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-lg">
+
+                <Link
+                  href={`/circuits/${circuit.slug}/book?departure=${circuit.departures?.[0]?.id || ''}&price_option=0`}
+                  className="block w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-lg text-center"
+                >
                   🎯 Creează pre-rezervare
-                </button>
-                
+                </Link>
+
                 <p className="text-xs text-gray-500 text-center mt-3 leading-relaxed">
                   Pre-rezervarea necesită validare de la J'Info Tours (răspuns în max 24h)
                 </p>
               </div>
-              
+
               {/* Opțiuni preț - Toate variantele */}
               {priceOptions.length > 0 && (
                 <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -398,10 +401,10 @@ export default async function CircuitPage({
                     {priceOptions.map((option: any, idx: number) => {
                       const optPrice = option.price || 0;
                       const agencyOptPrice = Math.round(optPrice - (optPrice * agencyCommission / 100));
-                      
+
                       return (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className="p-3 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:border-orange-300 transition-colors"
                         >
                           <div className="flex justify-between items-start gap-3">
@@ -430,7 +433,7 @@ export default async function CircuitPage({
                   </div>
                 </div>
               )}
-              
+
               {/* Quick Info */}
               <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-5 text-sm space-y-3 border border-blue-100">
                 <div className="flex items-start gap-3">
