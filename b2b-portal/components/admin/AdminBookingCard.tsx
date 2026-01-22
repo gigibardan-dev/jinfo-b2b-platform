@@ -257,22 +257,21 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                   <button
                     onClick={() => setShowApproveModal(true)}
                     className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                    style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
                   >
                     ✓ Aprobă
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
                     className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                    style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
                   >
                     ✕ Respinge
                   </button>
                 </>
               )}
               
-              {/* DEBUG - șterge după testare */}
-              <div className="text-xs text-gray-500 mt-2">
-                Debug: Status = "{booking.status}" | Type = {typeof booking.status}
-              </div>
+             
             </div>
           </div>
         </div>
@@ -304,6 +303,7 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                 onClick={handleApprove}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 transition-colors font-medium"
+                style={{ backgroundColor: loading ? '#9ca3af' : '#22c55e', color: '#ffffff' }}
               >
                 {loading ? 'Se procesează...' : '✓ Confirmă Aprobare'}
               </button>
@@ -311,6 +311,7 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                 onClick={() => setShowApproveModal(false)}
                 disabled={loading}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                style={{ backgroundColor: '#e5e7eb', color: '#374151' }}
               >
                 Anulează
               </button>
@@ -346,6 +347,7 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                 onClick={handleReject}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition-colors font-medium"
+                style={{ backgroundColor: loading ? '#9ca3af' : '#ef4444', color: '#ffffff' }}
               >
                 {loading ? 'Se procesează...' : '✕ Confirmă Respingere'}
               </button>
@@ -353,6 +355,7 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                 onClick={() => setShowRejectModal(false)}
                 disabled={loading}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                style={{ backgroundColor: '#e5e7eb', color: '#374151' }}
               >
                 Anulează
               </button>
