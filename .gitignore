@@ -21,3 +21,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Migration secrets
+/migration/.env
+
+/b2b-portal/.env.local
