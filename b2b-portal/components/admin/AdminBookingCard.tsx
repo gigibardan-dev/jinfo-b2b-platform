@@ -246,10 +246,10 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
 
             <div className="flex items-center gap-2">
               <Link
-                href={`/circuits/${circuit?.slug || ''}`}
+                href={`/admin/bookings/${booking.id}`}
                 className="text-sm text-blue-500 hover:text-blue-600 font-medium transition-colors"
               >
-                Vezi circuitul →
+                View Details →
               </Link>
 
               {booking.status === 'pending' && (
@@ -270,8 +270,6 @@ export default function AdminBookingCard({ booking }: AdminBookingCardProps) {
                   </button>
                 </>
               )}
-              
-             
             </div>
           </div>
         </div>
