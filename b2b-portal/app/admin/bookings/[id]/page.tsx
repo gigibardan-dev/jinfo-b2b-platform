@@ -13,7 +13,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   const supabase = await createClient();
 
   const { data: booking } = await supabase
-    .from('bookings')
+    .from('pre_bookings')
     .select(`
       *,
       circuit:circuits(
@@ -31,7 +31,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
       ),
       agency:agencies(
         id,
-        name,
+        company_name,
         email,
         phone
       )

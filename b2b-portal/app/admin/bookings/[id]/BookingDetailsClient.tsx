@@ -202,7 +202,7 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
           <CardContent className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Agency Name</p>
-              <p className="font-medium">{booking.agency.name}</p>
+              <p className="font-medium">{booking.agency.company_name}</p>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Mail className="h-4 w-4 text-muted-foreground" />
