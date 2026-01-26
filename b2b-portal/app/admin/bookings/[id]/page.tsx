@@ -9,35 +9,48 @@ interface BookingDetailsPageProps {
 }
 
 export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+  
   const supabase = await createClient();
 
-  const { data: booking } = await supabase
+  const { data: booking, error } = await supabase
     .from('pre_bookings')
     .select(`
       *,
-      circuit:circuits(
+      circuit:circuits!circuit_id (
         id,
+        name,
         title,
-        duration,
-        slug
+        slug,
+        nights,
+        continent
       ),
-      departure:departures(
+      departure:departures!departure_id (
         id,
-        start_date,
-        end_date,
+        departure_date,
+        return_date,
+        room_type,
+        price,
+        status,
         available_spots,
-        price_per_person
+        min_participants
       ),
-      agency:agencies(
+      agency:agencies!agency_id (
         id,
         company_name,
         email,
-        phone
+        phone,
+        contact_person
       )
     `)
     .eq('id', id)
     .single();
+
+  if (error) {
+    console.error('Error loading booking:', error);
+    notFound();
+  }
 
   if (!booking) {
     notFound();

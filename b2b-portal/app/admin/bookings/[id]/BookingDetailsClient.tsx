@@ -6,132 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PaymentBadge from '@/components/payments/PaymentBadge';
-import PaymentFormModal from '@/components/payments/PaymentFormModal';
-import PaymentsList from '@/components/payments/PaymentsList';
-import DocumentUpload from '@/components/documents/DocumentUpload';
-import DocumentsList from '@/components/documents/DocumentsList';
 import { Plus, Calendar, Users, MapPin, Phone, Mail } from 'lucide-react';
-import type { PaymentSummary } from '@/lib/types/payment';
-import type { BookingDocument, DocumentType } from '@/lib/types/document';
 
 interface BookingDetailsClientProps {
   booking: any;
 }
 
 export default function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
-  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
-  const [documents, setDocuments] = useState<BookingDocument[]>([]);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showDocumentModal, setShowDocumentModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const totalAmount = booking.departure.price_per_person * booking.number_of_travelers;
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const [paymentsRes, docsRes] = await Promise.all([
-        fetch(`/api/payments?booking_id=${booking.id}`),
-        fetch(`/api/documents?booking_id=${booking.id}`)
-      ]);
-
-      const payments = await paymentsRes.json();
-      const docs = await docsRes.json();
-
-      const paidAmount = payments.reduce((sum: number, p: any) => sum + p.amount, 0);
-      const remainingAmount = totalAmount - paidAmount;
-
-      let status: any = 'pending';
-      if (paidAmount === 0) status = 'pending';
-      else if (paidAmount >= totalAmount) status = 'paid';
-      else status = 'partial';
-
-      setPaymentSummary({
-        total_amount: totalAmount,
-        paid_amount: paidAmount,
-        remaining_amount: remainingAmount,
-        status,
-        payments
-      });
-
-      setDocuments(docs);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddPayment = async (data: any) => {
-    const res = await fetch('/api/payments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...data,
-        booking_id: booking.id,
-        currency: 'EUR'
-      })
-    });
-
-    if (!res.ok) throw new Error('Failed to add payment');
-    await loadData();
-  };
-
-  const handleDeletePayment = async (paymentId: string) => {
-    if (!confirm('Are you sure you want to delete this payment?')) return;
-
-    const res = await fetch(`/api/payments/${paymentId}`, {
-      method: 'DELETE'
-    });
-
-    if (!res.ok) throw new Error('Failed to delete payment');
-    await loadData();
-  };
-
-  const handleUploadDocument = async (file: File, documentType: DocumentType, notes?: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('booking_id', booking.id);
-    formData.append('document_type', documentType);
-    if (notes) formData.append('notes', notes);
-
-    const res = await fetch('/api/documents', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!res.ok) throw new Error('Failed to upload document');
-    await loadData();
-  };
-
-  const handleDeleteDocument = async (documentId: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
-
-    const res = await fetch(`/api/documents/${documentId}`, {
-      method: 'DELETE'
-    });
-
-    if (!res.ok) throw new Error('Failed to delete document');
-    await loadData();
-  };
-
-  const handleDownloadDocument = async (document: BookingDocument) => {
-    try {
-      const res = await fetch(`/api/documents/${document.id}`);
-      const { url } = await res.json();
-      window.open(url, '_blank');
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      alert('Failed to download document');
-    }
-  };
+  const totalAmount = booking.total_price || 0;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('ro-RO', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -140,29 +28,28 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
-      pending: { label: 'Pending', variant: 'outline' },
-      approved: { label: 'Approved', variant: 'default' },
-      rejected: { label: 'Rejected', variant: 'destructive' },
-      cancelled: { label: 'Cancelled', variant: 'outline' }
+      pending: { label: 'În așteptare', className: 'bg-yellow-100 text-yellow-800' },
+      approved: { label: 'Aprobat', className: 'bg-green-100 text-green-800' },
+      rejected: { label: 'Respins', className: 'bg-red-100 text-red-800' },
+      cancelled: { label: 'Anulat', className: 'bg-gray-100 text-gray-800' }
     };
-    const { label, variant } = variants[status] || variants.pending;
-    return <Badge variant={variant}>{label}</Badge>;
+    const { label, className } = variants[status] || variants.pending;
+    return <Badge className={className}>{label}</Badge>;
   };
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
-  }
+  const totalPax = (booking.num_adults || 0) + (booking.num_children || 0);
 
   return (
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Booking Details</h1>
-          <p className="text-muted-foreground">Reference: {booking.booking_reference}</p>
+          <h1 className="text-3xl font-bold">Detalii Pre-Rezervare</h1>
+          <p className="text-muted-foreground">
+            Nr: {booking.booking_number || 'N/A'}
+          </p>
         </div>
         <div className="flex gap-2">
           {getStatusBadge(booking.status)}
-          {paymentSummary && <PaymentBadge status={paymentSummary.status} />}
         </div>
       </div>
 
@@ -171,22 +58,22 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Circuit Information
+              Informații Circuit
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Circuit</p>
-              <p className="font-medium">{booking.circuit.title}</p>
+              <p className="font-medium">{booking.circuit?.name || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Duration</p>
-              <p className="font-medium">{booking.circuit.duration} days</p>
+              <p className="text-sm text-muted-foreground">Durată</p>
+              <p className="font-medium">{booking.circuit?.nights || 'N/A'} nopți</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Travel Dates</p>
+              <p className="text-sm text-muted-foreground">Date Călătorie</p>
               <p className="font-medium">
-                {formatDate(booking.departure.start_date)} - {formatDate(booking.departure.end_date)}
+                {formatDate(booking.departure?.departure_date)} - {formatDate(booking.departure?.return_date)}
               </p>
             </div>
           </CardContent>
@@ -196,19 +83,25 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Agency Information
+              Informații Agenție
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
-              <p className="text-sm text-muted-foreground">Agency Name</p>
-              <p className="font-medium">{booking.agency.company_name}</p>
+              <p className="text-sm text-muted-foreground">Nume Agenție</p>
+              <p className="font-medium">{booking.agency?.company_name || 'N/A'}</p>
             </div>
+            {booking.agency?.contact_person && (
+              <div>
+                <p className="text-sm text-muted-foreground">Persoană Contact</p>
+                <p className="font-medium">{booking.agency.contact_person}</p>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm">
               <Mail className="h-4 w-4 text-muted-foreground" />
-              <span>{booking.agency.email}</span>
+              <span>{booking.agency?.email || 'N/A'}</span>
             </div>
-            {booking.agency.phone && (
+            {booking.agency?.phone && (
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <span>{booking.agency.phone}</span>
@@ -220,124 +113,125 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
 
       <Card>
         <CardHeader>
-          <CardTitle>Booking Details</CardTitle>
+          <CardTitle>Detalii Rezervare</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <p className="text-sm text-muted-foreground">Number of Travelers</p>
-              <p className="text-2xl font-bold">{booking.number_of_travelers}</p>
+              <p className="text-sm text-muted-foreground">Număr Călători</p>
+              <p className="text-2xl font-bold">{totalPax}</p>
+              <p className="text-xs text-muted-foreground">
+                {booking.num_adults || 0} adulți, {booking.num_children || 0} copii
+              </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Price per Person</p>
-              <p className="text-2xl font-bold">{booking.departure.price_per_person} EUR</p>
+              <p className="text-sm text-muted-foreground">Tip Cameră</p>
+              <p className="text-xl font-bold">{booking.room_type || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold">{totalAmount} EUR</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-2xl font-bold text-orange-600">{totalAmount} EUR</p>
             </div>
           </div>
-          {booking.special_requests && (
+
+          {booking.passengers && Array.isArray(booking.passengers) && booking.passengers.length > 0 && (
             <>
               <Separator />
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Special Requests</p>
-                <p>{booking.special_requests}</p>
+                <p className="text-sm font-medium mb-3">Pasageri:</p>
+                <div className="grid gap-2">
+                  {booking.passengers.map((pax: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold text-gray-500">{idx + 1}.</span>
+                      <div className="flex-1">
+                        <p className="font-medium">{pax.name || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {pax.age || 'N/A'} ani
+                          {pax.passport && ` • Pașaport: ${pax.passport}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {booking.agency_notes && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Observații Agenție:</p>
+                <p className="text-sm bg-purple-50 p-3 rounded-lg border border-purple-200">
+                  {booking.agency_notes}
+                </p>
+              </div>
+            </>
+          )}
+
+          {booking.approval_notes && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Notă Aprobare:</p>
+                <p className="text-sm bg-green-50 p-3 rounded-lg border border-green-200">
+                  {booking.approval_notes}
+                </p>
+              </div>
+            </>
+          )}
+
+          {booking.rejection_reason && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Motiv Respingere:</p>
+                <p className="text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+                  {booking.rejection_reason}
+                </p>
               </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="payments" className="w-full">
+      <Tabs defaultValue="info" className="w-full">
         <TabsList>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="info">Informații</TabsTrigger>
+          <TabsTrigger value="payments">Plăți</TabsTrigger>
+          <TabsTrigger value="documents">Documente</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="payments" className="space-y-4">
+        <TabsContent value="info">
           <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Payment Summary</CardTitle>
-                <Button onClick={() => setShowPaymentModal(true)} disabled={paymentSummary?.status === 'paid'}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Payment
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {paymentSummary && (
-                <>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <p className="text-2xl font-bold">{paymentSummary.total_amount.toFixed(2)} EUR</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Paid Amount</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {paymentSummary.paid_amount.toFixed(2)} EUR
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Remaining</p>
-                      <p className="text-2xl font-bold text-orange-600">
-                        {paymentSummary.remaining_amount.toFixed(2)} EUR
-                      </p>
-                    </div>
-                  </div>
-                  <Separator />
-                  <PaymentsList
-                    payments={paymentSummary.payments}
-                    currency="EUR"
-                    onDelete={handleDeletePayment}
-                    canDelete={true}
-                  />
-                </>
-              )}
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground">
+                Detalii complete despre rezervare afișate mai sus.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="space-y-4">
+        <TabsContent value="payments">
           <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Documents</CardTitle>
-                <Button onClick={() => setShowDocumentModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Upload Document
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DocumentsList
-                documents={documents}
-                onDelete={handleDeleteDocument}
-                onDownload={handleDownloadDocument}
-                canDelete={true}
-              />
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground">
+                Modulul de plăți va fi implementat în curând.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground">
+                Modulul de documente va fi implementat în curând.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      {paymentSummary && (
-        <PaymentFormModal
-          open={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          onSubmit={handleAddPayment}
-          remainingAmount={paymentSummary.remaining_amount}
-          currency="EUR"
-        />
-      )}
-
-      <DocumentUpload
-        open={showDocumentModal}
-        onClose={() => setShowDocumentModal(false)}
-        onUpload={handleUploadDocument}
-      />
     </div>
   );
 }
