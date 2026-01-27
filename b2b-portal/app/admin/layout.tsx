@@ -1,7 +1,5 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 
 export default async function AdminLayout({
@@ -23,12 +21,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <>
-      <Header />
-
-      <div className="bg-gray-100 border-b border-gray-200">
+    <div className="min-h-screen flex flex-col">
+      {/* Admin Navigation */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-6 py-3">
+          <nav className="flex gap-6 py-4">
             <Link
               href="/admin/dashboard"
               className="text-sm font-medium text-gray-700 hover:text-orange-500 transition-colors"
@@ -63,13 +60,10 @@ export default async function AdminLayout({
         </div>
       </div>
 
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
+      {/* Content */}
+      <div className="flex-1 bg-gray-50">
+        {children}
       </div>
-
-      <Footer />
-    </>
+    </div>
   );
 }

@@ -6,16 +6,146 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, Users, MapPin, Phone, Mail } from 'lucide-react';
+import PaymentFormModal from '@/components/payments/PaymentFormModal';
+import PaymentsList from '@/components/payments/PaymentsList';
+import DocumentUpload from '@/components/documents/DocumentUpload';
+import DocumentsList from '@/components/documents/DocumentsList';
+import { Plus, MapPin, Phone, Mail, Users } from 'lucide-react';
+import type { DocumentType } from '@/lib/types/document';
 
 interface BookingDetailsClientProps {
   booking: any;
 }
 
 export default function BookingDetailsClient({ booking }: BookingDetailsClientProps) {
-  const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const totalAmount = booking.total_price || 0;
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load payments
+      const paymentsRes = await fetch(`/api/payments?booking_id=${booking.id}`);
+      if (paymentsRes.ok) {
+        const paymentsData = await paymentsRes.json();
+        setPayments(paymentsData);
+      }
+
+      // Load documents
+      const docsRes = await fetch(`/api/documents?booking_id=${booking.id}`);
+      if (docsRes.ok) {
+        const docsData = await docsRes.json();
+        setDocuments(docsData);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddPayment = async (data: any) => {
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          booking_id: booking.id,
+          currency: 'EUR'
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to add payment');
+      
+      await loadData();
+      setShowPaymentModal(false);
+      alert('Plată înregistrată cu succes!');
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      alert('Eroare la înregistrarea plății');
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Sigur vrei să ștergi această plată?')) return;
+
+    try {
+      const res = await fetch(`/api/payments/${paymentId}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) throw new Error('Failed to delete payment');
+      
+      await loadData();
+      alert('Plată ștearsă cu succes!');
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      alert('Eroare la ștergerea plății');
+    }
+  };
+
+  const handleUploadDocument = async (file: File, documentType: DocumentType, notes?: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('booking_id', booking.id);
+      formData.append('document_type', documentType);
+      if (notes) formData.append('notes', notes);
+
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) throw new Error('Failed to upload document');
+      
+      await loadData();
+      setShowDocumentModal(false);
+      alert('Document încărcat cu succes!');
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert('Eroare la încărcarea documentului');
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm('Sigur vrei să ștergi acest document?')) return;
+
+    try {
+      const res = await fetch(`/api/documents/${documentId}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) throw new Error('Failed to delete document');
+      
+      await loadData();
+      alert('Document șters cu succes!');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Eroare la ștergerea documentului');
+    }
+  };
+
+  const handleDownloadDocument = async (document: any) => {
+    try {
+      const res = await fetch(`/api/documents/${document.id}`);
+      const { url } = await res.json();
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Eroare la descărcarea documentului');
+    }
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -38,6 +168,8 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
   };
 
   const totalPax = (booking.num_adults || 0) + (booking.num_children || 0);
+  const paidAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+  const remainingAmount = totalAmount - paidAmount;
 
   return (
     <div className="p-8 space-y-6">
@@ -130,7 +262,7 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold text-orange-600">{totalAmount} EUR</p>
+              <p className="text-2xl font-bold text-orange-600">{totalAmount.toFixed(2)} EUR</p>
             </div>
           </div>
 
@@ -168,70 +300,124 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
               </div>
             </>
           )}
-
-          {booking.approval_notes && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-2">Notă Aprobare:</p>
-                <p className="text-sm bg-green-50 p-3 rounded-lg border border-green-200">
-                  {booking.approval_notes}
-                </p>
-              </div>
-            </>
-          )}
-
-          {booking.rejection_reason && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-2">Motiv Respingere:</p>
-                <p className="text-sm bg-red-50 p-3 rounded-lg border border-red-200">
-                  {booking.rejection_reason}
-                </p>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
 
       <Tabs defaultValue="info" className="w-full">
         <TabsList>
           <TabsTrigger value="info">Informații</TabsTrigger>
-          <TabsTrigger value="payments">Plăți</TabsTrigger>
-          <TabsTrigger value="documents">Documente</TabsTrigger>
+          <TabsTrigger value="payments">
+            Plăți ({payments.length})
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            Documente ({documents.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground">
-                Detalii complete despre rezervare afișate mai sus.
+                Toate detaliile rezervării sunt afișate mai sus.
               </p>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments">
+        <TabsContent value="payments" className="space-y-4">
           <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">
-                Modulul de plăți va fi implementat în curând.
-              </p>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Plăți</CardTitle>
+                <Button onClick={() => setShowPaymentModal(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Înregistrează Plată
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Payment Summary */}
+              <div className="grid gap-4 md:grid-cols-3 p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{totalAmount.toFixed(2)} EUR</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Plătit</p>
+                  <p className="text-2xl font-bold text-green-600">{paidAmount.toFixed(2)} EUR</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Rămas</p>
+                  <p className="text-2xl font-bold text-orange-600">{remainingAmount.toFixed(2)} EUR</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Payments List */}
+              {loading ? (
+                <p className="text-center text-muted-foreground py-8">Se încarcă...</p>
+              ) : payments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nu există plăți înregistrate.
+                </p>
+              ) : (
+                <PaymentsList
+                  payments={payments}
+                  currency="EUR"
+                  onDelete={handleDeletePayment}
+                  canDelete={true}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents">
+        <TabsContent value="documents" className="space-y-4">
           <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">
-                Modulul de documente va fi implementat în curând.
-              </p>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Documente</CardTitle>
+                <Button onClick={() => setShowDocumentModal(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Încarcă Document
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p className="text-center text-muted-foreground py-8">Se încarcă...</p>
+              ) : documents.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nu există documente încărcate.
+                </p>
+              ) : (
+                <DocumentsList
+                  documents={documents}
+                  onDelete={handleDeleteDocument}
+                  onDownload={handleDownloadDocument}
+                  canDelete={true}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <PaymentFormModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSubmit={handleAddPayment}
+        remainingAmount={remainingAmount}
+        currency="EUR"
+      />
+
+      <DocumentUpload
+        open={showDocumentModal}
+        onClose={() => setShowDocumentModal(false)}
+        onUpload={handleUploadDocument}
+      />
     </div>
   );
 }
