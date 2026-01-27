@@ -5,9 +5,41 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 
+async function getAgencyStats(userId: string) {
+  const supabase = await createClient();
+
+  const { data: agency } = await supabase
+    .from('agencies')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (!agency) {
+    return { agencyData: null, stats: null };
+  }
+
+  const { data: bookings } = await supabase
+    .from('pre_bookings')
+    .select('id, status, num_adults, num_children')
+    .eq('agency_id', agency.id);
+
+  const activeBookings = bookings?.filter(b => b.status === 'pending' || b.status === 'approved').length || 0;
+  const confirmedBookings = bookings?.filter(b => b.status === 'approved').length || 0;
+  const totalClients = bookings?.reduce((sum, b) => sum + (b.num_adults || 0) + (b.num_children || 0), 0) || 0;
+
+  return {
+    agencyData: agency,
+    stats: {
+      activeBookings,
+      confirmedBookings,
+      totalClients
+    }
+  };
+}
+
 export default async function AgencyDashboardPage() {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     redirect('/auth/login');
   }
@@ -19,13 +51,11 @@ export default async function AgencyDashboardPage() {
     redirect('/dashboard');
   }
 
-  // Fetch agency data
-  const supabase = await createClient();
-  const { data: agencyData } = await supabase
-    .from('agencies')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  const { agencyData, stats } = await getAgencyStats(user.id);
+
+  if (!agencyData || !stats) {
+    redirect('/dashboard');
+  }
 
   return (
     <>
@@ -112,7 +142,7 @@ export default async function AgencyDashboardPage() {
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 href="/"
                 className="block p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-xl border-2 border-green-200 transition-all hover:shadow-lg group"
               >
@@ -124,6 +154,23 @@ export default async function AgencyDashboardPage() {
                     </h4>
                     <p className="text-sm text-gray-600">
                       Explorează și rezervă circuite
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link
+                href="/agency/payments"
+                className="block p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl border-2 border-purple-200 transition-all hover:shadow-lg group"
+              >
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl">💰</span>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
+                      Plăți și Facturare
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      Vezi statusul plăților tale
                     </p>
                   </div>
                 </div>
@@ -140,24 +187,21 @@ export default async function AgencyDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                 <div className="text-3xl mb-2">📝</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">0</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.activeBookings}</div>
                 <div className="text-sm text-gray-600">Pre-Rezervări Active</div>
               </div>
 
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
                 <div className="text-3xl mb-2">✓</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">0</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.confirmedBookings}</div>
                 <div className="text-sm text-gray-600">Rezervări Confirmate</div>
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
                 <div className="text-3xl mb-2">👥</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">0</div>
-                <div className="text-sm text-gray-600">Total Clienți</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalClients}</div>
+                <div className="text-sm text-gray-600">Total Călători</div>
               </div>
-            </div>
-            <div className="mt-6 text-center text-sm text-gray-500">
-              Statisticile vor fi populate când vei avea rezervări
             </div>
           </div>
 

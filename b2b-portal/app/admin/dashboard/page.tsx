@@ -1,12 +1,42 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
+import { createClient } from '@/lib/supabase/server';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 
+async function getAdminStats() {
+  const supabase = await createClient();
+
+  const { data: agencies } = await supabase
+    .from('agencies')
+    .select('id, status')
+    .eq('status', 'active');
+
+  const { data: bookings } = await supabase
+    .from('pre_bookings')
+    .select('id, status, total_price');
+
+  const { data: payments } = await supabase
+    .from('payment_records')
+    .select('amount');
+
+  const activeAgencies = agencies?.length || 0;
+  const pendingBookings = bookings?.filter(b => b.status === 'pending').length || 0;
+  const totalBookings = bookings?.length || 0;
+  const totalRevenue = payments?.reduce((sum, p) => sum + parseFloat(String(p.amount)), 0) || 0;
+
+  return {
+    activeAgencies,
+    pendingBookings,
+    totalBookings,
+    totalRevenue
+  };
+}
+
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     redirect('/auth/login');
   }
@@ -17,6 +47,8 @@ export default async function AdminDashboardPage() {
   if (role !== 'admin' && role !== 'superadmin' && role !== 'operator') {
     redirect('/dashboard');
   }
+
+  const stats = await getAdminStats();
 
   return (
     <>
@@ -86,7 +118,7 @@ export default async function AdminDashboardPage() {
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 href="/admin/bookings"
                 className="block p-6 bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl border-2 border-orange-200 transition-all hover:shadow-lg group"
               >
@@ -103,34 +135,39 @@ export default async function AdminDashboardPage() {
                 </div>
               </Link>
 
-              {/* TODO: Add more admin actions */}
-              <div className="p-6 bg-gray-50 rounded-xl border-2 border-gray-200 opacity-50">
+              <Link
+                href="/admin/agencies"
+                className="block p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl border-2 border-purple-200 transition-all hover:shadow-lg group"
+              >
                 <div className="flex items-start gap-4">
                   <span className="text-3xl">🏢</span>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
                       Gestionare Agenții
                     </h4>
                     <p className="text-sm text-gray-600">
-                      În curând...
+                      Vezi și administrează agențiile
                     </p>
                   </div>
                 </div>
-              </div>
+              </Link>
 
-              <div className="p-6 bg-gray-50 rounded-xl border-2 border-gray-200 opacity-50">
+              <Link
+                href="/admin/payments"
+                className="block p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-xl border-2 border-green-200 transition-all hover:shadow-lg group"
+              >
                 <div className="flex items-start gap-4">
-                  <span className="text-3xl">📊</span>
+                  <span className="text-3xl">💰</span>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Statistici
+                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">
+                      Gestionare Plăți
                     </h4>
                     <p className="text-sm text-gray-600">
-                      În curând...
+                      Înregistrează și monitorizează plăți
                     </p>
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -143,30 +180,27 @@ export default async function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
                 <div className="text-3xl mb-2">🏢</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.activeAgencies}</div>
                 <div className="text-sm text-gray-600">Agenții Active</div>
               </div>
 
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                 <div className="text-3xl mb-2">⏳</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.pendingBookings}</div>
                 <div className="text-sm text-gray-600">În Așteptare</div>
               </div>
 
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
                 <div className="text-3xl mb-2">📝</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
-                <div className="text-sm text-gray-600">Rezervări</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalBookings}</div>
+                <div className="text-sm text-gray-600">Total Rezervări</div>
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
                 <div className="text-3xl mb-2">💰</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">-</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalRevenue.toFixed(2)} EUR</div>
                 <div className="text-sm text-gray-600">Venit Total</div>
               </div>
-            </div>
-            <div className="mt-6 text-center text-sm text-gray-500">
-              Statisticile vor fi populate în curând
             </div>
           </div>
         </div>
