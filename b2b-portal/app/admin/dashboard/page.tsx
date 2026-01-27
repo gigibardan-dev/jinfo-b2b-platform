@@ -51,162 +51,239 @@ export default async function AdminDashboardPage() {
   const stats = await getAdminStats();
 
   return (
-    <>
-      <Header />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Welcome Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="text-6xl">👨‍💼</div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      
+      <main className="max-w-7xl mx-auto px-4 py-2 space-y-8">
+        {/* Welcome Section */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
+                👨‍💼
+              </div>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-white mb-1">
                   Dashboard Administrator
                 </h1>
-                <p className="text-gray-600">
-                  Bine ai venit, {user.email}
+                <p className="text-orange-100 text-sm">
+                  Bine ai venit, <span className="font-semibold">{user.email}</span>
                 </p>
               </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Rol</div>
-                  <div className="text-xl font-bold text-orange-500 capitalize">
-                    {role}
-                  </div>
+              <div className="hidden lg:flex items-center gap-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/20">
+                <div className="text-center">
+                  <div className="text-xs text-orange-100 mb-1">Status</div>
+                  <div className="text-lg font-bold text-white">✓ Activ</div>
                 </div>
-                <div className="bg-white rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Email</div>
-                  <div className="text-sm font-semibold text-gray-900 truncate">
-                    {user.email}
-                  </div>
+                <div className="w-px h-12 bg-white/20"></div>
+                <div className="text-center">
+                  <div className="text-xs text-orange-100 mb-1">Rol</div>
+                  <div className="text-lg font-bold text-white capitalize">{role}</div>
                 </div>
-                <div className="bg-white rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">Status</div>
-                  <div className="text-xl font-bold text-green-600">
-                    Activ
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Actions */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span>⚙️</span>
-              <span>Acțiuni Administrator</span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Link 
-                href="/admin/create-agency"
-                className="block p-6 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl border-2 border-blue-200 transition-all hover:shadow-lg group"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">➕</span>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                      Creare Agenție
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Creează un cont nou de agenție
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/bookings"
-                className="block p-6 bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl border-2 border-orange-200 transition-all hover:shadow-lg group"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">📋</span>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">
-                      Gestionare Pre-Rezervări
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Aprobă sau respinge pre-rezervări
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/agencies"
-                className="block p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl border-2 border-purple-200 transition-all hover:shadow-lg group"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">🏢</span>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">
-                      Gestionare Agenții
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Vezi și administrează agențiile
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/payments"
-                className="block p-6 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-xl border-2 border-green-200 transition-all hover:shadow-lg group"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">💰</span>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">
-                      Gestionare Plăți
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Înregistrează și monitorizează plăți
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span>📈</span>
-              <span>Statistici Rapide</span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
-                <div className="text-3xl mb-2">🏢</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.activeAgencies}</div>
-                <div className="text-sm text-gray-600">Agenții Active</div>
-              </div>
-
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
-                <div className="text-3xl mb-2">⏳</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.pendingBookings}</div>
-                <div className="text-sm text-gray-600">În Așteptare</div>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
-                <div className="text-3xl mb-2">📝</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalBookings}</div>
-                <div className="text-sm text-gray-600">Total Rezervări</div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
-                <div className="text-3xl mb-2">💰</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalRevenue.toFixed(2)} EUR</div>
-                <div className="text-sm text-gray-600">Venit Total</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <Footer />
-    </>
+        {/* Statistics Cards - TOP POSITION */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📈</span>
+            <h2 className="text-2xl font-bold text-gray-900">Statistici Rapide</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Active Agencies */}
+            <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-orange-200">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 border-b-4 border-orange-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
+                    🏢
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{stats.activeAgencies}</div>
+                    <div className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Total</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Agenții Active</div>
+              </div>
+            </div>
+
+            {/* Pending Bookings */}
+            <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 border-b-4 border-blue-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
+                    ⏳
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{stats.pendingBookings}</div>
+                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Pending</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">În Așteptare</div>
+              </div>
+            </div>
+
+            {/* Total Bookings */}
+            <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 border-b-4 border-green-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
+                    📝
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{stats.totalBookings}</div>
+                    <div className="text-xs font-semibold text-green-600 uppercase tracking-wide">Toate</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Total Rezervări</div>
+              </div>
+            </div>
+
+            {/* Total Revenue */}
+            <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 border-b-4 border-purple-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
+                    💰
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalRevenue.toFixed(0)} €</div>
+                    <div className="text-xs font-semibold text-purple-600 uppercase tracking-wide">EUR</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Venit Total</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Actions */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">⚙️</span>
+            <h2 className="text-2xl font-bold text-gray-900">Acțiuni Administrator</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link 
+              href="/admin/create-agency"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-300"
+            >
+              <div className="h-full p-6 bg-gradient-to-br from-blue-50 to-blue-100 group-hover:from-blue-100 group-hover:to-blue-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                    ➕
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                      Creare Agenție
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Creează un cont nou de agenție în sistem
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/bookings"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-orange-300"
+            >
+              <div className="h-full p-6 bg-gradient-to-br from-orange-50 to-orange-100 group-hover:from-orange-100 group-hover:to-orange-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                    📋
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                      Gestionare Rezervări
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Aprobă sau respinge pre-rezervările din sistem
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/agencies"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-300"
+            >
+              <div className="h-full p-6 bg-gradient-to-br from-purple-50 to-purple-100 group-hover:from-purple-100 group-hover:to-purple-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                    🏢
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+                      Gestionare Agenții
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Vezi și administrează toate agențiile
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/payments"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-300"
+            >
+              <div className="h-full p-6 bg-gradient-to-br from-green-50 to-green-100 group-hover:from-green-100 group-hover:to-green-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform">
+                    💰
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
+                      Gestionare Plăți
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Înregistrează și monitorizează toate plățile
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick Insights */}
+        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl p-8 text-white">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-3xl">💡</span>
+            <h2 className="text-2xl font-bold">Informații Rapide</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">📊</div>
+              <div className="text-lg font-semibold mb-1">Performanță</div>
+              <p className="text-sm text-white/80">
+                Sistem operațional cu {stats.activeAgencies} agenții active
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">⚡</div>
+              <div className="text-lg font-semibold mb-1">Activitate</div>
+              <p className="text-sm text-white/80">
+                {stats.pendingBookings} rezervări necesită atenție
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">🎯</div>
+              <div className="text-lg font-semibold mb-1">Obiectiv</div>
+              <p className="text-sm text-white/80">
+                Continuă creșterea și optimizarea platformei
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+     
+    </div>
   );
 }

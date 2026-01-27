@@ -101,13 +101,13 @@ export default async function AgencyPaymentsPage() {
 
   return (
     <>
-      <Header />
+    
       <AgencyPaymentsDashboardClient
         bookings={data.bookings}
         payments={data.payments}
         stats={data.stats}
       />
-      <Footer />
+      
     </>
   );
 }

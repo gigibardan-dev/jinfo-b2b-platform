@@ -1,0 +1,148 @@
+.
+|-- app
+|   |-- admin
+|   |   |-- agencies
+|   |   |   `-- page.tsx
+|   |   |-- bookings
+|   |   |   |-- [id]
+|   |   |   |   |-- BookingDetailsClient.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   `-- page.tsx
+|   |   |-- create-agency
+|   |   |   |-- CreateAgencyForm.tsx
+|   |   |   `-- page.tsx
+|   |   |-- dashboard
+|   |   |   `-- page.tsx
+|   |   |-- payments
+|   |   |   |-- PaymentsDashboardClient.tsx
+|   |   |   `-- page.tsx
+|   |   `-- layout.tsx
+|   |-- agency
+|   |   |-- bookings
+|   |   |   |-- [id]
+|   |   |   |   |-- AgencyBookingDetailsClient.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   `-- page.tsx
+|   |   |-- dashboard
+|   |   |   `-- page.tsx
+|   |   |-- payments
+|   |   |   |-- AgencyPaymentsDashboardClient.tsx
+|   |   |   `-- page.tsx
+|   |   `-- profile
+|   |       |-- AgencyProfileForm.tsx
+|   |       `-- page.tsx
+|   |-- api
+|   |   |-- admin
+|   |   |   `-- agencies
+|   |   |       |-- activate
+|   |   |       |-- suspend
+|   |   |       `-- update
+|   |   |-- circuits
+|   |   |   `-- route.ts
+|   |   |-- documents
+|   |   |   |-- [id]
+|   |   |   |   `-- route.ts
+|   |   |   `-- route.ts
+|   |   `-- payments
+|   |       |-- [id]
+|   |       |   `-- route.ts
+|   |       `-- route.ts
+|   |-- auth
+|   |   |-- login
+|   |   |   `-- page.tsx
+|   |   |-- register
+|   |   |   `-- page.tsx
+|   |   `-- layout.tsx
+|   |-- circuits
+|   |   `-- [slug]
+|   |       |-- book
+|   |       |   `-- page.tsx
+|   |       |-- not-found.tsx
+|   |       `-- page.tsx
+|   |-- dashboard
+|   |   `-- page.tsx
+|   |-- globals.css
+|   |-- layout.tsx
+|   `-- page.tsx
+|-- components
+|   |-- admin
+|   |   |-- agencies
+|   |   |   |-- AgenciesTable.tsx
+|   |   |   |-- AgenciesTableClient.tsx
+|   |   |   |-- AgencyDetailsModal.tsx
+|   |   |   |-- AgencyFilters.tsx
+|   |   |   |-- EditAgencyModal.tsx
+|   |   |   `-- StatCard.tsx
+|   |   `-- AdminBookingCard.tsx
+|   |-- agency
+|   |   `-- AgencyBookingCard.tsx
+|   |-- booking
+|   |   `-- PreBookingForm.tsx
+|   |-- circuits
+|   |   `-- CircuitCard.tsx
+|   |-- documents
+|   |   |-- DocumentUpload.tsx
+|   |   `-- DocumentsList.tsx
+|   |-- layout
+|   |   |-- Footer.tsx
+|   |   `-- Header.tsx
+|   |-- payments
+|   |   |-- PaymentBadge.tsx
+|   |   |-- PaymentFormModal.tsx
+|   |   `-- PaymentsList.tsx
+|   `-- ui
+|       |-- alert-dialog.tsx
+|       |-- badge.tsx
+|       |-- button.tsx
+|       |-- card.tsx
+|       |-- dialog.tsx
+|       |-- dropdown-menu.tsx
+|       |-- input.tsx
+|       |-- label.tsx
+|       |-- select.tsx
+|       |-- separator.tsx
+|       |-- skeleton.tsx
+|       |-- success-dialog.tsx
+|       |-- table.tsx
+|       `-- tabs.tsx
+|-- lib
+|   |-- auth
+|   |   `-- utils.ts
+|   |-- services
+|   |   |-- agencies.ts
+|   |   |-- documents.ts
+|   |   `-- payments.ts
+|   |-- supabase
+|   |   |-- client.ts
+|   |   `-- server.ts
+|   |-- types
+|   |   |-- agency.ts
+|   |   |-- database.ts
+|   |   |-- document.ts
+|   |   `-- payment.ts
+|   `-- utils.ts
+|-- public
+|   |-- file.svg
+|   |-- globe.svg
+|   |-- next.svg
+|   |-- vercel.svg
+|   `-- window.svg
+|-- .env
+|-- .env.local
+|-- IMPLEMENTATION_SUMMARY.md
+|-- PROJECT_KNOWLEDGE_B2B_PLATFORM.md
+|-- PROJECT_STATUS_COMPLETE.md
+|-- README.md
+|-- eslint.config.mjs
+|-- middleware.ts
+|-- next-env.d.ts
+|-- next.config.ts
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.mjs
+|-- project_structure.txt
+`-- tsconfig.json
+
+48 directories, 95 files
+
+tree -I 'node_modules|.next|.git|dist|build|coverage|.vercel|.turbo' -a -L 5 --dirsfirst > project_structure.txt && cat project_structure.txt

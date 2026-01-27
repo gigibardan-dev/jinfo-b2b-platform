@@ -1,13 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import PaymentBadge from '@/components/payments/PaymentBadge';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, FileText, CheckCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 
 interface PaymentsDashboardClientProps {
@@ -23,6 +19,7 @@ interface PaymentsDashboardClientProps {
 }
 
 export default function PaymentsDashboardClient({ payments, bookings, stats }: PaymentsDashboardClientProps) {
+  const [activeTab, setActiveTab] = useState<'payments' | 'bookings'>('payments');
   const [searchTerm, setSearchTerm] = useState('');
   const [bookingSearchTerm, setBookingSearchTerm] = useState('');
 
@@ -41,7 +38,7 @@ export default function PaymentsDashboardClient({ payments, bookings, stats }: P
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ro-RO', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -49,212 +46,304 @@ export default function PaymentsDashboardClient({ payments, bookings, stats }: P
   };
 
   const formatMethod = (method: string) => {
-    return method.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const methods: Record<string, string> = {
+      bank_transfer: 'Transfer Bancar',
+      cash: 'Numerar',
+      card: 'Card',
+      other: 'Altele'
+    };
+    return methods[method] || method;
   };
 
+  const collectionRate = stats.totalBookings > 0
+    ? ((stats.paidBookings / stats.totalBookings) * 100)
+    : 0;
+
   return (
-    <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Payments Dashboard</h1>
-        <p className="text-muted-foreground">Track all payments and revenue</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)} EUR</div>
-            <p className="text-xs text-muted-foreground">{stats.totalPayments} payments received</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingAmount.toFixed(2)} EUR</div>
-            <p className="text-xs text-muted-foreground">Outstanding balance</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paid Bookings</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.paidBookings}</div>
-            <p className="text-xs text-muted-foreground">
-              out of {stats.totalBookings} bookings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.totalBookings > 0
-                ? ((stats.paidBookings / stats.totalBookings) * 100).toFixed(1)
-                : 0}%
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-8 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-3xl">
+              💰
             </div>
-            <p className="text-xs text-muted-foreground">Fully paid bookings</p>
-          </CardContent>
-        </Card>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-1">
+                Dashboard Plăți
+              </h1>
+              <p className="text-green-100 text-sm">
+                Monitorizează toate plățile și veniturile platformei
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="payments" className="w-full">
-        <TabsList>
-          <TabsTrigger value="payments">Payment History</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings Payment Status</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Recent Payments</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by reference or agency..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
+      {/* Statistics Cards */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">📊</span>
+          <h2 className="text-xl font-bold text-gray-900">Statistici Generale</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Revenue */}
+          <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-green-200">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                  💵
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalRevenue.toFixed(0)} €</div>
+                  <div className="text-xs font-semibold text-green-600 uppercase tracking-wide">Total</div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Booking Reference</TableHead>
-                      <TableHead>Agency</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Reference</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No payments found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                          <TableCell>
-                            <Link
-                              href={`/admin/bookings/${payment.booking.id}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {payment.booking.booking_reference}
-                            </Link>
-                          </TableCell>
-                          <TableCell>{payment.booking.agency?.name || 'N/A'}</TableCell>
-                          <TableCell className="font-medium">
-                            {payment.amount.toFixed(2)} EUR
-                          </TableCell>
-                          <TableCell>{formatMethod(payment.payment_method)}</TableCell>
-                          <TableCell>{payment.reference_number || '-'}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <div className="text-sm font-semibold text-gray-700">Venit Total</div>
+              <div className="text-xs text-gray-500 mt-1">{stats.totalPayments} plăți încasate</div>
+            </div>
+          </div>
 
-        <TabsContent value="bookings">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Bookings Payment Status</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by reference..."
-                    value={bookingSearchTerm}
-                    onChange={(e) => setBookingSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
+          {/* Pending Amount */}
+          <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-orange-200">
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                  ⏳
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-900">{stats.pendingAmount.toFixed(0)} €</div>
+                  <div className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Pending</div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking Reference</TableHead>
-                      <TableHead>Total Amount</TableHead>
-                      <TableHead>Paid Amount</TableHead>
-                      <TableHead>Remaining</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payments</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBookings.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          No bookings found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredBookings.map((booking) => (
-                        <TableRow key={booking.id}>
-                          <TableCell className="font-medium">
-                            {booking.booking_reference}
-                          </TableCell>
-                          <TableCell>{booking.total_amount.toFixed(2)} EUR</TableCell>
-                          <TableCell className="text-green-600">
-                            {booking.paid_amount.toFixed(2)} EUR
-                          </TableCell>
-                          <TableCell className="text-orange-600">
-                            {(booking.total_amount - booking.paid_amount).toFixed(2)} EUR
-                          </TableCell>
-                          <TableCell>
-                            <PaymentBadge status={booking.payment_status} />
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{booking.payments_count} payments</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              href={`/admin/bookings/${booking.id}`}
-                              className="text-blue-600 hover:underline text-sm"
-                            >
-                              View Details
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+              <div className="text-sm font-semibold text-gray-700">Suma Restantă</div>
+              <div className="text-xs text-gray-500 mt-1">De încasat</div>
+            </div>
+          </div>
+
+          {/* Paid Bookings */}
+          <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-blue-200">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                  ✅
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-900">{stats.paidBookings}</div>
+                  <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Plătite</div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="text-sm font-semibold text-gray-700">Rezervări Plătite</div>
+              <div className="text-xs text-gray-500 mt-1">din {stats.totalBookings} total</div>
+            </div>
+          </div>
+
+          {/* Collection Rate */}
+          <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                  📈
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-900">{collectionRate.toFixed(1)}%</div>
+                  <div className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Rată</div>
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-gray-700">Rată de Colectare</div>
+              <div className="text-xs text-gray-500 mt-1">Rezervări plătite complet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 bg-white rounded-xl shadow-md border border-gray-200 p-2">
+        <button
+          onClick={() => setActiveTab('payments')}
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+            activeTab === 'payments'
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          💳 Istoric Plăți ({payments.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('bookings')}
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+            activeTab === 'bookings'
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          📋 Status Rezervări ({bookings.length})
+        </button>
+      </div>
+
+      {/* Payments Tab */}
+      {activeTab === 'payments' && (
+        <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b-2 border-green-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💳</span>
+                <h2 className="text-xl font-bold text-gray-900">Plăți Recente</h2>
+              </div>
+              <div className="relative w-64">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                <Input
+                  placeholder="Caută după referință sau agenție..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-2 border-green-200 focus:border-green-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {filteredPayments.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">💸</div>
+                <p className="text-gray-600 font-semibold">Nu s-au găsit plăți</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {searchTerm ? `Niciun rezultat pentru "${searchTerm}"` : 'Nu există plăți înregistrate'}
+                </p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Data</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rezervare</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Agenție</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Sumă</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Metodă</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Referință</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredPayments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {formatDate(payment.payment_date)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/admin/bookings/${payment.booking.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+                        >
+                          {payment.booking.booking_reference}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {payment.booking.agency?.name || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-lg font-bold text-green-600">
+                          {payment.amount.toFixed(2)} €
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">
+                          {formatMethod(payment.payment_method)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 font-mono">
+                        {payment.reference_number || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bookings Tab */}
+      {activeTab === 'bookings' && (
+        <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📋</span>
+                <h2 className="text-xl font-bold text-gray-900">Status Plăți Rezervări</h2>
+              </div>
+              <div className="relative w-64">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                <Input
+                  placeholder="Caută după referință..."
+                  value={bookingSearchTerm}
+                  onChange={(e) => setBookingSearchTerm(e.target.value)}
+                  className="pl-10 border-2 border-blue-200 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {filteredBookings.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-gray-600 font-semibold">Nu s-au găsit rezervări</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {bookingSearchTerm ? `Niciun rezultat pentru "${bookingSearchTerm}"` : 'Nu există rezervări'}
+                </p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rezervare</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Total</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Plătit</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rămas</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Plăți</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredBookings.map((booking) => (
+                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-gray-900">
+                        {booking.booking_reference}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-700">
+                        {booking.total_amount.toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-green-600">
+                        {booking.paid_amount.toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-orange-600">
+                        {(booking.total_amount - booking.paid_amount).toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4">
+                        <PaymentBadge status={booking.payment_status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className="font-semibold">
+                          {booking.payments_count} {booking.payments_count === 1 ? 'plată' : 'plăți'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/admin/bookings/${booking.id}`}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold text-sm"
+                        >
+                          Vezi Detalii
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

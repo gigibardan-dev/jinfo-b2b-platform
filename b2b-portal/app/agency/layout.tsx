@@ -3,7 +3,7 @@ import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-export default async function AdminLayout({
+export default async function AgencyLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -16,14 +16,14 @@ export default async function AdminLayout({
 
   const role = await getUserRole(user.id);
 
-  // Only admins can access this section
-  if (role !== 'admin' && role !== 'superadmin' && role !== 'operator') {
+  // Only agencies can access this section
+  if (role !== 'agency') {
     redirect('/dashboard');
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <Header role="admin" />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
+      <Header role="agency" />
       
       {/* Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">

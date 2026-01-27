@@ -20,9 +20,9 @@ export default async function AdminCreateAgencyPage() {
 
   return (
     <>
-      <Header />
+     
       
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-2 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Breadcrumb */}
           <div className="mb-6">
@@ -86,7 +86,7 @@ export default async function AdminCreateAgencyPage() {
         </div>
       </div>
 
-      <Footer />
+      
     </>
   );
 }

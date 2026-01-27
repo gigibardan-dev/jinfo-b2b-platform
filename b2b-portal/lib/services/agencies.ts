@@ -26,18 +26,28 @@ export async function getAllAgencies(statusFilter: string = 'all'): Promise<Agen
       // Get booking counts
       const { data: bookings } = await supabase
         .from('pre_bookings')
-        .select('status, total_price')
+        .select('id, status, total_price')
         .eq('agency_id', agency.id);
 
       const total_bookings = bookings?.length || 0;
       const pending_bookings = bookings?.filter(b => b.status === 'pending').length || 0;
-      const confirmed_bookings = bookings?.filter(b => b.status === 'confirmed').length || 0;
-      const validated_bookings = bookings?.filter(b => b.status === 'validated').length || 0;
+      const confirmed_bookings = bookings?.filter(b => b.status === 'approved').length || 0;
+      const validated_bookings = bookings?.filter(b => b.status === 'approved').length || 0;
 
-      // Calculate total commission from confirmed bookings
-      const total_commission = bookings
-        ?.filter(b => b.status === 'confirmed')
-        .reduce((sum, b) => sum + (b.total_price * (agency.commission_rate / 100)), 0) || 0;
+      // Get actual payments for this agency's bookings
+      const bookingIds = bookings?.map(b => b.id) || [];
+      let total_commission = 0;
+
+      if (bookingIds.length > 0) {
+        const { data: payments } = await supabase
+          .from('payment_records')
+          .select('amount')
+          .in('pre_booking_id', bookingIds);
+
+        // Calculate commission from actual paid amounts
+        const totalPaid = payments?.reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0) || 0;
+        total_commission = totalPaid * (agency.commission_rate / 100);
+      }
 
       return {
         ...agency,
@@ -64,21 +74,28 @@ export async function getAgencyStatistics(agencyId: string): Promise<AgencyStats
 
   const { data: bookings } = await supabase
     .from('pre_bookings')
-    .select('status, total_price')
+    .select('id, status, total_price')
     .eq('agency_id', agencyId);
 
   const stats = {
     total_bookings: bookings?.length || 0,
     pending_bookings: bookings?.filter(b => b.status === 'pending').length || 0,
-    confirmed_bookings: bookings?.filter(b => b.status === 'confirmed').length || 0,
-    validated_bookings: bookings?.filter(b => b.status === 'validated').length || 0,
+    confirmed_bookings: bookings?.filter(b => b.status === 'approved').length || 0,
+    validated_bookings: bookings?.filter(b => b.status === 'approved').length || 0,
     total_commission: 0,
   };
 
   if (agency && bookings) {
-    stats.total_commission = bookings
-      .filter(b => b.status === 'confirmed')
-      .reduce((sum, b) => sum + (b.total_price * (agency.commission_rate / 100)), 0);
+    const bookingIds = bookings.map(b => b.id);
+    if (bookingIds.length > 0) {
+      const { data: payments } = await supabase
+        .from('payment_records')
+        .select('amount')
+        .in('pre_booking_id', bookingIds);
+
+      const totalPaid = payments?.reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0) || 0;
+      stats.total_commission = totalPaid * (agency.commission_rate / 100);
+    }
   }
 
   return stats;
