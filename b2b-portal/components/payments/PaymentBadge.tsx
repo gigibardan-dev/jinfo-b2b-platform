@@ -7,11 +7,11 @@ interface PaymentBadgeProps {
 
 export default function PaymentBadge({ status }: PaymentBadgeProps) {
   const variants: Record<PaymentStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    pending: { label: 'Pending', variant: 'outline' },
-    partial: { label: 'Partial', variant: 'secondary' },
-    paid: { label: 'Paid', variant: 'default' },
-    overdue: { label: 'Overdue', variant: 'destructive' },
-    cancelled: { label: 'Cancelled', variant: 'outline' },
+    pending: { label: 'În așteptare', variant: 'outline' },
+    partial: { label: 'Parțial', variant: 'secondary' },
+    paid: { label: 'Plătit', variant: 'default' },
+    overdue: { label: 'Întârziat', variant: 'destructive' },
+    cancelled: { label: 'Anulat', variant: 'outline' },
   };
 
   const { label, variant } = variants[status];

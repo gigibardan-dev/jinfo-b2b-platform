@@ -16,13 +16,13 @@ export default function PaymentsList({ payments, currency, onDelete, canDelete =
   if (payments.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No payments recorded yet
+        Nu există plăți înregistrate
       </div>
     );
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ro-RO', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -38,11 +38,11 @@ export default function PaymentsList({ payments, currency, onDelete, canDelete =
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead>Reference</TableHead>
-            <TableHead>Notes</TableHead>
+            <TableHead>Data</TableHead>
+            <TableHead>Sumă</TableHead>
+            <TableHead>Metodă</TableHead>
+            <TableHead>Referință</TableHead>
+            <TableHead>Note</TableHead>
             {canDelete && <TableHead className="w-[50px]"></TableHead>}
           </TableRow>
         </TableHeader>

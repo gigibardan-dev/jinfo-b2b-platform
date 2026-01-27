@@ -3,11 +3,12 @@ import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
 import { createClient } from '@/lib/supabase/server';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import AgencyBookingCard from '@/components/agency/AgencyBookingCard';
 import Link from 'next/link';
 
 async function getAgencyBookings(userId: string) {
   const supabase = await createClient();
-  
+
   // Get agency data
   const { data: agencyData } = await supabase
     .from('agencies')
@@ -19,33 +20,49 @@ async function getAgencyBookings(userId: string) {
     return [];
   }
 
-  // Get bookings with circuit and departure data
+  // Get bookings with circuit, departure, and payments data
   const { data: bookings, error } = await supabase
     .from('pre_bookings')
     .select(`
       *,
-      circuits (
+      circuit:circuits!circuit_id (
         id,
         name,
         slug,
+        nights,
         main_image,
         continent
       ),
-      departures (
+      departure:departures!departure_id (
         id,
         departure_date,
         return_date
       )
     `)
     .eq('agency_id', agencyData.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false});
 
   if (error) {
     console.error('Error fetching bookings:', error);
     return [];
   }
 
-  return bookings || [];
+  // Get payments for all bookings
+  const bookingsWithPayments = await Promise.all(
+    (bookings || []).map(async (booking) => {
+      const { data: payments } = await supabase
+        .from('payment_records')
+        .select('amount')
+        .eq('pre_booking_id', booking.id);
+
+      return {
+        ...booking,
+        payments: payments || []
+      };
+    })
+  );
+
+  return bookingsWithPayments;
 }
 
 export default async function AgencyBookingsPage({
@@ -177,142 +194,10 @@ export default async function AgencyBookingsPage({
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {bookings.map((booking: any) => {
-                const circuit = booking.circuits;
-                const departure = booking.departures;
-                const depDate = departure ? new Date(departure.departure_date) : null;
-                const totalPax = booking.num_adults + booking.num_children;
-                
-                return (
-                  <div
-                    key={booking.id}
-                    className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden border-2 border-gray-100 hover:border-orange-200"
-                  >
-                    <div className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-gray-900">
-                              {circuit?.name || 'Circuit necunoscut'}
-                            </h3>
-                            {getStatusBadge(booking.status)}
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                            {booking.booking_number && (
-                              <span className="flex items-center gap-1">
-                                <span className="font-semibold">Nr:</span>
-                                <span className="font-mono">{booking.booking_number}</span>
-                              </span>
-                            )}
-                            {depDate && (
-                              <span className="flex items-center gap-1">
-                                📅 {depDate.toLocaleDateString('ro-RO', { 
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric'
-                                })}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              👥 {totalPax} {totalPax === 1 ? 'persoană' : 'persoane'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              🏨 {booking.room_type}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-right ml-4">
-                          <div className="text-sm text-gray-600 mb-1">Total</div>
-                          <div className="text-2xl font-bold text-orange-600">
-                            {booking.total_price} EUR
-                          </div>
-                          {booking.agency_commission && (
-                            <div className="text-sm text-green-600 font-medium">
-                              Comision: +{booking.agency_commission} EUR
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Passengers */}
-                      {booking.passengers && Array.isArray(booking.passengers) && (
-                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                          <div className="text-sm font-semibold text-gray-700 mb-2">
-                            Pasageri:
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                            {booking.passengers.map((pax: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-2 text-gray-700">
-                                <span className="text-gray-500">{idx + 1}.</span>
-                                <span className="font-medium">{pax.name}</span>
-                                <span className="text-gray-500">({pax.age} ani)</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Notes */}
-                      {booking.agency_notes && (
-                        <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="text-sm font-semibold text-blue-900 mb-1">
-                            Observații:
-                          </div>
-                          <div className="text-sm text-blue-800">
-                            {booking.agency_notes}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Admin Response */}
-                      {booking.status === 'rejected' && booking.rejection_reason && (
-                        <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                          <div className="text-sm font-semibold text-red-900 mb-1">
-                            Motiv respingere:
-                          </div>
-                          <div className="text-sm text-red-800">
-                            {booking.rejection_reason}
-                          </div>
-                        </div>
-                      )}
-
-                      {booking.status === 'approved' && booking.approval_notes && (
-                        <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                          <div className="text-sm font-semibold text-green-900 mb-1">
-                            Notă aprobare:
-                          </div>
-                          <div className="text-sm text-green-800">
-                            {booking.approval_notes}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <div className="text-xs text-gray-500">
-                          Creat: {new Date(booking.created_at).toLocaleDateString('ro-RO', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-
-                        <Link
-                          href={`/circuits/${circuit?.slug || ''}`}
-                          className="text-sm text-orange-500 hover:text-orange-600 font-medium transition-colors"
-                        >
-                          Vezi circuitul →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {bookings.map((booking: any) => (
+                <AgencyBookingCard key={booking.id} booking={booking} />
+              ))}
             </div>
           )}
         </div>

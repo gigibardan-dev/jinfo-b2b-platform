@@ -16,13 +16,13 @@ export default function DocumentsList({ documents, onDelete, onDownload, canDele
   if (documents.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No documents uploaded yet
+        Nu există documente încărcate
       </div>
     );
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ro-RO', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -47,11 +47,11 @@ export default function DocumentsList({ documents, onDelete, onDownload, canDele
         <TableHeader>
           <TableRow>
             <TableHead className="w-[50px]"></TableHead>
-            <TableHead>File Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Uploaded</TableHead>
-            <TableHead>Notes</TableHead>
+            <TableHead>Nume Fișier</TableHead>
+            <TableHead>Tip</TableHead>
+            <TableHead>Mărime</TableHead>
+            <TableHead>Încărcat</TableHead>
+            <TableHead>Note</TableHead>
             <TableHead className="w-[100px]"></TableHead>
           </TableRow>
         </TableHeader>
