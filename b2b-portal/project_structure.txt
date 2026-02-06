@@ -28,9 +28,10 @@
 |   |   |-- payments
 |   |   |   |-- AgencyPaymentsDashboardClient.tsx
 |   |   |   `-- page.tsx
-|   |   `-- profile
-|   |       |-- AgencyProfileForm.tsx
-|   |       `-- page.tsx
+|   |   |-- profile
+|   |   |   |-- AgencyProfileForm.tsx
+|   |   |   `-- page.tsx
+|   |   `-- layout.tsx
 |   |-- api
 |   |   |-- admin
 |   |   |   `-- agencies
@@ -75,7 +76,9 @@
 |   |   |   `-- StatCard.tsx
 |   |   `-- AdminBookingCard.tsx
 |   |-- agency
-|   |   `-- AgencyBookingCard.tsx
+|   |   |-- AgencyBookingCard.tsx
+|   |   |-- AgencyBookingCardHorizontal.tsx
+|   |   `-- AgencyBookingsClient.tsx
 |   |-- booking
 |   |   `-- PreBookingForm.tsx
 |   |-- circuits
@@ -143,6 +146,7 @@
 |-- project_structure.txt
 `-- tsconfig.json
 
-48 directories, 95 files
+48 directories, 98 files
+
 
 tree -I 'node_modules|.next|.git|dist|build|coverage|.vercel|.turbo' -a -L 5 --dirsfirst > project_structure.txt && cat project_structure.txt

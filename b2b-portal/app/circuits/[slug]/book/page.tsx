@@ -9,34 +9,32 @@ import type { Circuit, Departure } from '@/lib/types/database';
 import Image from 'next/image';
 import Link from 'next/link';
 
-async function getCircuitAndDeparture(slug: string, departureId: string) {
+async function getCircuitWithAllDepartures(slug: string) {
   const supabase = await createClient();
   
-  // Get circuit
+  // Get circuit with ALL departures
   const { data: circuit, error: circuitError } = await supabase
     .from('circuits')
-    .select('*')
+    .select(`
+      *,
+      departures (
+        id,
+        departure_date,
+        return_date,
+        room_type,
+        price,
+        status
+      )
+    `)
     .eq('slug', slug)
     .eq('is_active', true)
     .single();
 
   if (circuitError || !circuit) {
-    return { circuit: null, departure: null };
+    return null;
   }
 
-  // Get specific departure
-  const { data: departure, error: departureError } = await supabase
-    .from('departures')
-    .select('*')
-    .eq('id', departureId)
-    .eq('circuit_id', circuit.id)
-    .single();
-
-  if (departureError || !departure) {
-    return { circuit: null, departure: null };
-  }
-
-  return { circuit, departure };
+  return circuit as Circuit & { departures: Departure[] };
 }
 
 async function getAgencyData(userId: string) {
@@ -78,13 +76,9 @@ export default async function BookingPage({
   const { slug } = await params;
   const { departure: departureId, price_option: priceOptionIndex } = await searchParams;
 
-  if (!departureId) {
-    redirect(`/circuits/${slug}`);
-  }
-
-  const { circuit, departure } = await getCircuitAndDeparture(slug, departureId);
+  const circuit = await getCircuitWithAllDepartures(slug);
   
-  if (!circuit || !departure) {
+  if (!circuit) {
     notFound();
   }
 
@@ -94,17 +88,52 @@ export default async function BookingPage({
     redirect('/dashboard');
   }
 
-  // Get price option
+  // Get price options
   const priceOptions = Array.isArray(circuit.price_options) ? circuit.price_options : [];
   const selectedPriceOptionIndex = priceOptionIndex ? parseInt(priceOptionIndex) : 0;
+  
+  // Default to first departure if none selected
+  const selectedDepartureId = departureId || circuit.departures?.[0]?.id;
+  const selectedDeparture = circuit.departures?.find(d => d.id === selectedDepartureId) || circuit.departures?.[0];
+
+  if (!selectedDeparture) {
+    // No departures available
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="text-6xl mb-4">😞</div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Nicio plecare disponibilă
+              </h1>
+              <p className="text-gray-600 mb-6">
+                Momentan nu există plecări disponibile pentru acest circuit.
+              </p>
+              <Link
+                href={`/circuits/${slug}`}
+                className="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium"
+              >
+                <span>←</span>
+                <span>Înapoi la circuit</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   const priceOption = priceOptions[selectedPriceOptionIndex] || {
     type: 'Persoana in camera dubla',
     price: circuit.price_double || 0,
     currency: 'EUR'
   };
 
-  const depDate = new Date(departure.departure_date);
-  const retDate = new Date(departure.return_date);
+  const depDate = new Date(selectedDeparture.departure_date);
+  const retDate = new Date(selectedDeparture.return_date);
 
   return (
     <>
@@ -145,9 +174,12 @@ export default async function BookingPage({
             <div className="lg:col-span-2">
               <PreBookingForm
                 circuit={circuit as Circuit}
-                departure={departure as Departure}
+                departure={selectedDeparture as Departure}
+                allDepartures={circuit.departures as Departure[]}
                 agencyId={agencyData.id}
                 priceOption={priceOption}
+                allPriceOptions={priceOptions}
+                initialPriceOptionIndex={selectedPriceOptionIndex}
               />
             </div>
 

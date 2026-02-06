@@ -179,7 +179,7 @@ export default async function CircuitPage({
                 </div>
               )}
 
-              {/* Plecări disponibile - COMPACT cu TOATE OPȚIUNILE */}
+              {/* Plecări disponibile - COMPACT cu TOATE OPȚIUNILE + BUTOANE PREREZERVA */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <span>📅</span>
@@ -249,7 +249,7 @@ export default async function CircuitPage({
                                   </div>
                                 </div>
 
-                                {/* TOATE OPȚIUNILE DE PREȚ */}
+                                {/* TOATE OPȚIUNILE DE PREȚ CU BUTOANE */}
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700 mb-2">
                                     Opțiuni de cazare:
@@ -261,21 +261,21 @@ export default async function CircuitPage({
                                     return (
                                       <div
                                         key={optIdx}
-                                        className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 hover:border-orange-300 transition-colors"
+                                        className="flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 hover:border-orange-300 transition-colors"
                                       >
-                                        <div className="flex-1 pr-3">
+                                        <div className="flex-1 pr-3 min-w-0">
                                           <div className="font-medium text-gray-900 text-sm">
                                             {option.type}
                                           </div>
                                           {option.info && (
-                                            <div className="text-xs text-gray-500 mt-0.5">
+                                            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
                                               {option.info.replace(/\t+/g, ' ').trim()}
                                             </div>
                                           )}
                                         </div>
 
-                                        <div className="text-right flex flex-col items-end gap-1">
-                                          <div className="text-xl font-bold text-orange-500">
+                                        <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                                          <div className="text-xl font-bold text-orange-500 whitespace-nowrap">
                                             {agencyOptPrice} {option.currency || 'EUR'}
                                           </div>
                                           <div className="flex items-center gap-2">
@@ -285,6 +285,13 @@ export default async function CircuitPage({
                                             </span>
                                           </div>
                                         </div>
+
+                                        <Link
+                                          href={`/circuits/${circuit.slug}/book?departure=${dep.id}&price_option=${optIdx}`}
+                                          className="shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md text-sm whitespace-nowrap"
+                                        >
+                                          🎯 Prerezerva
+                                        </Link>
                                       </div>
                                     );
                                   })}
@@ -352,7 +359,7 @@ export default async function CircuitPage({
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Price Card - FIX OVERFLOW */}
+              {/* Price Card - cu prima plecare disponibilă */}
               <div className="bg-white rounded-xl p-6 shadow-lg sticky top-20 border-2 border-orange-100 max-h-[calc(100vh-6rem)] overflow-y-auto">
                 <div className="text-center mb-6">
                   <div className="text-sm text-gray-600 mb-2">Preț agenție de la</div>
@@ -378,15 +385,24 @@ export default async function CircuitPage({
                   </div>
                 </div>
 
-                <Link
-                  href={`/circuits/${circuit.slug}/book?departure=${circuit.departures?.[0]?.id || ''}&price_option=0`}
-                  className="block w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-lg text-center"
-                >
-                  🎯 Creează pre-rezervare
-                </Link>
+                {circuit.departures?.[0] ? (
+                  <Link
+                    href={`/circuits/${circuit.slug}/book?departure=${circuit.departures[0].id}&price_option=0`}
+                    className="block w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-lg text-center"
+                  >
+                    🎯 Creează pre-rezervare
+                  </Link>
+                ) : (
+                  <div className="w-full bg-gray-300 text-gray-500 py-4 rounded-xl font-semibold text-lg text-center cursor-not-allowed">
+                    Nicio plecare disponibilă
+                  </div>
+                )}
 
                 <p className="text-xs text-gray-500 text-center mt-3 leading-relaxed">
-                  Pre-rezervarea necesită validare de la J'Info Tours (răspuns în max 24h)
+                  {circuit.departures?.[0] 
+                    ? 'Pre-rezervarea necesită validare de la J\'Info Tours (răspuns în max 24h)'
+                    : 'Momentan nu există plecări disponibile pentru acest circuit'
+                  }
                 </p>
               </div>
 
