@@ -1,12 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import PaymentBadge from '@/components/payments/PaymentBadge';
 import Link from 'next/link';
-import { TrendingUp, TrendingDown, CheckCircle, Clock, Calendar, CreditCard, FileText, AlertTriangle } from 'lucide-react';
 import type { PaymentStatus } from '@/lib/types/payment';
 
 interface AgencyPaymentsDashboardClientProps {
@@ -21,7 +18,26 @@ interface AgencyPaymentsDashboardClientProps {
 }
 
 export default function AgencyPaymentsDashboardClient({ bookings, payments, stats }: AgencyPaymentsDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState('history');
+  const [activeTab, setActiveTab] = useState<'payments' | 'bookings'>('payments');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [bookingSearchTerm, setBookingSearchTerm] = useState('');
+
+  const filteredPayments = payments.filter((payment) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      payment.booking_number?.toLowerCase().includes(search) ||
+      payment.circuit_name?.toLowerCase().includes(search) ||
+      payment.confirmation_notes?.toLowerCase().includes(search)
+    );
+  });
+
+  const filteredBookings = bookings.filter((booking) => {
+    const search = bookingSearchTerm.toLowerCase();
+    return (
+      booking.booking_number?.toLowerCase().includes(search) ||
+      booking.circuit?.name?.toLowerCase().includes(search)
+    );
+  });
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -33,8 +49,13 @@ export default function AgencyPaymentsDashboardClient({ bookings, payments, stat
   };
 
   const formatMethod = (method: string) => {
-    if (!method) return 'N/A';
-    return method.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const methods: Record<string, string> = {
+      bank_transfer: 'Transfer Bancar',
+      cash: 'Numerar',
+      card: 'Card',
+      other: 'Altele'
+    };
+    return methods[method] || method;
   };
 
   const getPaymentStatus = (booking: any): PaymentStatus => {
@@ -51,249 +72,353 @@ export default function AgencyPaymentsDashboardClient({ bookings, payments, stat
     const today = new Date();
     const daysRemaining = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-    return { deadline, daysRemaining };
+    return { daysRemaining };
   };
 
-  const getDeadlineText = (booking: any) => {
+  const getDeadlineWarning = (booking: any) => {
     if (booking.remaining_amount <= 0) {
-      return { text: '✓ Plătit', className: 'text-green-600' };
+      return {
+        text: '✓ Plătit',
+        className: 'bg-green-100 text-green-800 border-green-200'
+      };
     }
 
-    const { daysRemaining } = getPaymentDeadline(booking.departure.departure_date);
+    const { daysRemaining } = getPaymentDeadline(booking.departure?.departure_date);
 
     if (daysRemaining > 10) {
-      return { text: '✓ În termen', className: 'text-green-600' };
+      return {
+        text: `✓ ${daysRemaining} zile`,
+        className: 'bg-green-100 text-green-800 border-green-200'
+      };
     }
 
     if (daysRemaining >= 5 && daysRemaining <= 10) {
-      return { text: `⚠️ ${daysRemaining} zile`, className: 'text-yellow-600' };
+      return {
+        text: `⚠️ ${daysRemaining} zile`,
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      };
     }
 
     if (daysRemaining > 0 && daysRemaining < 5) {
-      return { text: `🚨 ${daysRemaining} zile`, className: 'text-red-600' };
+      return {
+        text: `🚨 ${daysRemaining} zile!`,
+        className: 'bg-red-100 text-red-800 border-red-200'
+      };
     }
 
-    return { text: '❌ Depășit', className: 'text-red-600' };
+    return {
+      text: '❌ Depășit',
+      className: 'bg-red-100 text-red-800 border-red-200'
+    };
   };
 
+  const collectionRate = bookings.length > 0
+    ? ((stats.bookingsFullyPaid / bookings.length) * 100)
+    : 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-orange-500 to-blue-500 p-8 text-white">
+    <div className="space-y-6">{/* Removed min-h-screen bg-gradient py-8 px-4 */}
+      <div className="max-w-7xl mx-auto space-y-6">{/* Kept max-w for content constraint */}
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-blue-600 px-8 py-6">
             <div className="flex items-center gap-4">
-              <div className="text-5xl">💰</div>
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Dashboard Plăți</h1>
-                <p className="text-blue-100">
-                  Monitorizează plățile și statusul financiar
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-3xl">
+                💰
+              </div>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-white mb-1">
+                  Dashboard Plăți
+                </h1>
+                <p className="text-orange-100 text-sm">
+                  Monitorizează toate plățile și statusul financiar al rezervărilor tale
                 </p>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gray-50">
-            <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <TrendingUp className="h-8 w-8 text-green-600" />
+        {/* Statistics Cards */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">📊</span>
+            <h2 className="text-xl font-bold text-gray-900">Statistici Generale</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Total Paid */}
+            <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                    💵
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.totalPaid.toFixed(0)} €</div>
+                    <div className="text-xs font-semibold text-green-600 uppercase tracking-wide">Încasat</div>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-green-600 mb-1">
-                  {stats.totalPaid.toFixed(2)} EUR
-                </div>
-                <div className="text-sm text-gray-600">Total Încasat</div>
-              </CardContent>
-            </Card>
+                <div className="text-sm font-semibold text-gray-700">Total Plătit</div>
+                <div className="text-xs text-gray-500 mt-1">{payments.length} plăți înregistrate</div>
+              </div>
+            </div>
 
-            <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <TrendingDown className="h-8 w-8 text-orange-600" />
+            {/* Outstanding Amount */}
+            <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-orange-200">
+              <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                    ⏳
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.totalOutstanding.toFixed(0)} €</div>
+                    <div className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Restant</div>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-orange-600 mb-1">
-                  {stats.totalOutstanding.toFixed(2)} EUR
-                </div>
-                <div className="text-sm text-gray-600">Restant de Plată</div>
-              </CardContent>
-            </Card>
+                <div className="text-sm font-semibold text-gray-700">Rămas de Plată</div>
+                <div className="text-xs text-gray-500 mt-1">În așteptare</div>
+              </div>
+            </div>
 
-            <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <CheckCircle className="h-8 w-8 text-blue-600" />
+            {/* Fully Paid Bookings */}
+            <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                    ✅
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.bookingsFullyPaid}</div>
+                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Complete</div>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-blue-600 mb-1">
-                  {stats.bookingsFullyPaid}
-                </div>
-                <div className="text-sm text-gray-600">Plătite Integral</div>
-              </CardContent>
-            </Card>
+                <div className="text-sm font-semibold text-gray-700">Rezervări Plătite</div>
+                <div className="text-xs text-gray-500 mt-1">din {bookings.length} total</div>
+              </div>
+            </div>
 
-            <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <Clock className="h-8 w-8 text-yellow-600" />
+            {/* Collection Rate */}
+            <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all border-2 border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">
+                    📈
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{collectionRate.toFixed(1)}%</div>
+                    <div className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Rată</div>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-yellow-600 mb-1">
-                  {stats.bookingsPending}
-                </div>
-                <div className="text-sm text-gray-600">În Așteptare</div>
-              </CardContent>
-            </Card>
+                <div className="text-sm font-semibold text-gray-700">Rată de Plată</div>
+                <div className="text-xs text-gray-500 mt-1">Rezervări plătite complet</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Istoric Plăți ({payments.length})
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Status Rezervări ({bookings.length})
-            </TabsTrigger>
-          </TabsList>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 bg-white rounded-xl shadow-md border border-gray-200 p-2">
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'payments'
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            💳 Istoric Plăți ({payments.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'bookings'
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            📋 Status Rezervări ({bookings.length})
+          </button>
+        </div>
 
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Istoric Plăți</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {payments.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Nu există plăți înregistrate</p>
-                  </div>
-                ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Rezervare</TableHead>
-                          <TableHead>Circuit</TableHead>
-                          <TableHead>Sumă</TableHead>
-                          <TableHead>Metodă</TableHead>
-                          <TableHead>Referință</TableHead>
-                          <TableHead>Acțiuni</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {payments.map((payment: any) => (
-                          <TableRow key={payment.id}>
-                            <TableCell className="font-medium">
-                              {formatDate(payment.paid_at)}
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-mono text-sm">
-                                {payment.booking_number || 'N/A'}
-                              </span>
-                            </TableCell>
-                            <TableCell>{payment.circuit_name}</TableCell>
-                            <TableCell className="font-bold text-green-600">
-                              {parseFloat(payment.amount).toFixed(2)} EUR
-                            </TableCell>
-                            <TableCell>{formatMethod(payment.payment_method)}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {payment.confirmation_notes || '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Link
-                                href={`/agency/bookings/${payment.pre_booking_id}`}
-                                className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-                              >
-                                Vezi →
-                              </Link>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* Payments Tab */}
+        {activeTab === 'payments' && (
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b-2 border-orange-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">💳</span>
+                  <h2 className="text-xl font-bold text-gray-900">Plăți Primite</h2>
+                </div>
+                <div className="relative w-64">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <Input
+                    placeholder="Caută după referință sau circuit..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 border-2 border-orange-200 focus:border-orange-500"
+                  />
+                </div>
+              </div>
+            </div>
 
-          <TabsContent value="bookings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Status Plăți Rezervări</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {bookings.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Nu există rezervări</p>
-                  </div>
-                ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nr. Rezervare</TableHead>
-                          <TableHead>Circuit</TableHead>
-                          <TableHead>Plecare</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Plătit</TableHead>
-                          <TableHead>Rămas</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Deadline</TableHead>
-                          <TableHead>Acțiuni</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bookings.map((booking: any) => {
-                          const deadlineInfo = getDeadlineText(booking);
-                          return (
-                            <TableRow key={booking.id}>
-                              <TableCell className="font-mono text-sm">
-                                {booking.booking_number}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {booking.circuit?.name || 'N/A'}
-                              </TableCell>
-                              <TableCell>
-                                {formatDate(booking.departure?.departure_date)}
-                              </TableCell>
-                              <TableCell className="font-semibold">
-                                {booking.total_price.toFixed(2)} EUR
-                              </TableCell>
-                              <TableCell className="font-semibold text-green-600">
-                                {booking.total_paid.toFixed(2)} EUR
-                              </TableCell>
-                              <TableCell className="font-semibold text-orange-600">
-                                {Math.max(booking.remaining_amount, 0).toFixed(2)} EUR
-                              </TableCell>
-                              <TableCell>
-                                <PaymentBadge status={getPaymentStatus(booking)} />
-                              </TableCell>
-                              <TableCell>
-                                <span className={`text-sm font-medium ${deadlineInfo.className}`}>
-                                  {deadlineInfo.text}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <Link
-                                  href={`/agency/bookings/${booking.id}`}
-                                  className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-                                >
-                                  Vezi →
-                                </Link>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            <div className="overflow-x-auto">
+              {filteredPayments.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">💸</div>
+                  <p className="text-gray-600 font-semibold">Nu s-au găsit plăți</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {searchTerm ? `Niciun rezultat pentru "${searchTerm}"` : 'Nu există plăți înregistrate'}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Data Plată</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rezervare</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Circuit</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Sumă</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Metodă</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Referință</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredPayments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {formatDate(payment.paid_at)}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-sm font-semibold text-gray-900">
+                          #{payment.booking_number || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {payment.circuit_name}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-lg font-bold text-green-600">
+                            {parseFloat(payment.amount).toFixed(2)} €
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">
+                            {formatMethod(payment.payment_method)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 font-mono">
+                          {payment.confirmation_notes || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link
+                            href={`/agency/bookings/${payment.pre_booking_id}`}
+                            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all font-semibold text-sm"
+                          >
+                            Vezi Rezervare
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Bookings Tab */}
+        {activeTab === 'bookings' && (
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b-2 border-blue-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📋</span>
+                  <h2 className="text-xl font-bold text-gray-900">Status Plăți Rezervări</h2>
+                </div>
+                <div className="relative w-64">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <Input
+                    placeholder="Caută după număr sau circuit..."
+                    value={bookingSearchTerm}
+                    onChange={(e) => setBookingSearchTerm(e.target.value)}
+                    className="pl-10 border-2 border-blue-200 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {filteredBookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📭</div>
+                  <p className="text-gray-600 font-semibold">Nu s-au găsit rezervări</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {bookingSearchTerm ? `Niciun rezultat pentru "${bookingSearchTerm}"` : 'Nu există rezervări'}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Rezervare</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider min-w-[200px]">Circuit</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Plecare</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Total</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Plătit</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Rămas</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Deadline</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredBookings.map((booking) => {
+                      const deadlineWarning = getDeadlineWarning(booking);
+                      return (
+                        <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-900 whitespace-nowrap">
+                            #{booking.booking_number}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 font-medium max-w-[250px]">
+                            <div className="line-clamp-2" title={booking.circuit?.name || 'N/A'}>
+                              {booking.circuit?.name || 'N/A'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">
+                            {formatDate(booking.departure?.departure_date)}
+                          </td>
+                          <td className="px-4 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                            {booking.total_price.toFixed(2)} €
+                          </td>
+                          <td className="px-4 py-4 text-sm font-bold text-green-600 whitespace-nowrap">
+                            {booking.total_paid.toFixed(2)} €
+                          </td>
+                          <td className="px-4 py-4 text-sm font-bold text-orange-600 whitespace-nowrap">
+                            {Math.max(booking.remaining_amount, 0).toFixed(2)} €
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <PaymentBadge status={getPaymentStatus(booking)} />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${deadlineWarning.className}`}>
+                              {deadlineWarning.text}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <Link
+                              href={`/agency/bookings/${booking.id}`}
+                              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold text-sm"
+                            >
+                              Vezi Detalii
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

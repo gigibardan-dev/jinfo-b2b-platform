@@ -52,7 +52,6 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
     try {
       const supabase = createClient();
 
-      // 1. Create auth user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -64,20 +63,14 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
         }
       });
 
-      if (signUpError) {
-        throw signUpError;
-      }
+      if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('Failed to create user');
 
-      if (!authData.user) {
-        throw new Error('Failed to create user');
-      }
-
-      // 2. Create agency record with status ACTIVE (pre-validated)
       const { error: agencyError } = await supabase
         .from('agencies')
         .insert({
-          id: authData.user.id,        // ✅ primary key
-          user_id: authData.user.id,   // ✅ foreign key
+          id: authData.user.id,
+          user_id: authData.user.id,
           company_name: formData.company_name,
           trade_register: formData.trade_register,
           registration_number: formData.registration_number || null,
@@ -91,31 +84,26 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
           bank_name: formData.bank_name || null,
           bank_account: formData.bank_account || null,
           commission_rate: parseFloat(formData.commission_rate),
-          status: 'active', // PRE-VALIDATED!
+          status: 'active',
           approved_at: new Date().toISOString(),
           approved_by: adminUserId,
         });
 
-      if (agencyError) {
-        throw agencyError;
-      }
+      if (agencyError) throw agencyError;
 
-      // 3. Create user_profiles entry with role 'agency'
       const { error: profileError } = await supabase
         .from('user_profiles')
         .insert({
-          id: authData.user.id,  // ✅ FIXED: coloana este 'id' nu 'user_id'
+          id: authData.user.id,
           role: 'agency',
         });
 
       if (profileError) {
         console.error('Error creating user profile:', profileError);
-        // Don't throw - profile might already exist from trigger
       }
 
       setSuccess(true);
 
-      // Reset form after 3 seconds
       setTimeout(() => {
         setSuccess(false);
         setFormData({
@@ -146,13 +134,13 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
 
   if (success) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
         <div className="text-6xl mb-4">✅</div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">
           Agenție creată cu succes!
         </h3>
         <p className="text-gray-600 mb-4">
-          Agenția {formData.company_name} a fost creată și activată.
+          Agenția <span className="font-bold text-green-600">{formData.company_name}</span> a fost creată și activată.
         </p>
         <p className="text-sm text-gray-500">
           Formularul se va reseta automat în 3 secunde...
@@ -164,12 +152,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
   return (
     <>
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
           <div className="flex items-start gap-3">
-            <span className="text-red-500 text-xl">⚠️</span>
+            <span className="text-red-500 text-2xl">❌</span>
             <div className="flex-1">
-              <div className="font-semibold text-red-800">Eroare</div>
-              <div className="text-sm text-red-600 mt-1">{error}</div>
+              <div className="font-bold text-red-800">Eroare</div>
+              <div className="text-sm text-red-700 mt-1">{error}</div>
             </div>
           </div>
         </div>
@@ -177,15 +165,15 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Autentificare */}
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <span>🔐</span>
-            <span>Date autentificare</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">🔐</span>
+            <span>Date Autentificare</span>
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -193,13 +181,14 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
                 placeholder="contact@agentia.ro"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Parolă * (min 8 caractere)
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Parolă <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">(min 8 caractere)</span>
               </label>
               <input
                 type="text"
@@ -208,7 +197,7 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 onChange={handleChange}
                 required
                 minLength={8}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
                 placeholder="Parola inițială (agenția o poate schimba)"
               />
             </div>
@@ -216,15 +205,15 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
         </div>
 
         {/* Date Companie */}
-        <div className="space-y-4 pt-4 border-t">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <span>🏢</span>
-            <span>Date companie</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏢</span>
+            <span>Date Companie</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nume companie *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nume Companie <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -232,12 +221,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.company_name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                CUI *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                CUI <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -245,11 +234,11 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.trade_register}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nr. Reg. Com.
               </label>
               <input
@@ -257,12 +246,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 name="registration_number"
                 value={formData.registration_number}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Persoană contact *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Persoană Contact <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -270,12 +259,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.contact_person}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Telefon *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Telefon <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -283,12 +272,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comision (%) *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Comision (%) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -299,22 +288,22 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.commission_rate}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all font-semibold text-purple-600"
               />
             </div>
           </div>
         </div>
 
         {/* Adresă Facturare */}
-        <div className="space-y-4 pt-4 border-t">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <span>📍</span>
-            <span>Adresă facturare</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">📍</span>
+            <span>Adresă Facturare</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Adresă *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Adresă <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -322,12 +311,12 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.billing_address}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Oraș *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Oraș <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -335,11 +324,11 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 value={formData.billing_city}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Județ
               </label>
               <input
@@ -347,45 +336,47 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 name="billing_county"
                 value={formData.billing_county}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cod poștal
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cod Poștal
               </label>
               <input
                 type="text"
                 name="billing_postal_code"
                 value={formData.billing_postal_code}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* Date Bancare */}
-        <div className="space-y-4 pt-4 border-t">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <span>🏦</span>
-            <span>Date bancare (opțional)</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏦</span>
+            <span>Date Bancare</span>
+            <span className="text-xs text-gray-500 font-normal">(opțional)</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Banca
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Bancă
               </label>
               <input
                 type="text"
                 name="bank_name"
                 value={formData.bank_name}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                placeholder="Ex: BCR, BRD, ING"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 IBAN
               </label>
               <input
@@ -393,29 +384,33 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
                 name="bank_account"
                 value={formData.bank_account}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                placeholder="RO00XXXX0000000000000000"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all font-mono"
               />
             </div>
           </div>
         </div>
 
         {/* Submit */}
-        <div className="pt-6 border-t">
+        <div className="pt-4">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <span className="flex items-center justify-center gap-3">
+                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 <span>Se creează agenția...</span>
               </span>
             ) : (
-              '✅ Creează agenție (pre-validată)'
+              <span className="flex items-center justify-center gap-2">
+                <span>✅</span>
+                <span>Creează Agenție (Pre-Validată)</span>
+              </span>
             )}
           </button>
         </div>

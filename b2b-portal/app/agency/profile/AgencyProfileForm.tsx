@@ -86,7 +86,6 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
       setSuccess(true);
       setIsEditing(false);
       
-      // Refresh the page to show updated data
       setTimeout(() => {
         router.refresh();
       }, 1000);
@@ -100,7 +99,6 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
   };
 
   const handleCancel = () => {
-    // Reset form to original data
     setFormData({
       company_name: agencyData.company_name || '',
       trade_register: agencyData.trade_register || '',
@@ -120,30 +118,38 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
 
   return (
     <div>
+      {/* Success Message */}
       {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-2 text-green-800">
-            <span className="text-xl">✓</span>
-            <span className="font-medium">Profilul a fost actualizat cu succes!</span>
+        <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl animate-pulse">
+          <div className="flex items-center gap-3">
+            <span className="text-green-500 text-2xl">✅</span>
+            <div>
+              <div className="font-bold text-green-800">Profilul a fost actualizat cu succes!</div>
+              <div className="text-sm text-green-700">Modificările au fost salvate.</div>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2 text-red-800">
-            <span className="text-xl">✕</span>
-            <span className="font-medium">{error}</span>
+        <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+          <div className="flex items-center gap-3">
+            <span className="text-red-500 text-2xl">❌</span>
+            <div>
+              <div className="font-bold text-red-800">Eroare</div>
+              <div className="text-sm text-red-700">{error}</div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Toggle Edit Mode Button */}
+      {/* Edit Button */}
       {!isEditing && (
         <div className="mb-6 flex justify-end">
           <button
             onClick={() => setIsEditing(true)}
-            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
           >
             <span>✏️</span>
             <span>Editează Profilul</span>
@@ -153,15 +159,15 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Company Information */}
-        <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>🏢</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏢</span>
             <span>Informații Companie</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nume Companie *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nume Companie <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -170,13 +176,13 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Registrul Comerțului *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Registrul Comerțului <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -185,13 +191,13 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                CUI / CIF *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                CUI / CIF <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -200,13 +206,13 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Persoană de Contact *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Persoană de Contact <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -215,13 +221,13 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Telefon *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Telefon <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -230,20 +236,23 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Rată Comision
               </label>
-              <input
-                type="text"
-                value={`${agencyData.commission_rate}%`}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={`${agencyData.commission_rate}%`}
+                  disabled
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed font-semibold text-purple-600"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
+              </div>
               <p className="text-xs text-gray-500 mt-1">
                 Doar administratorii pot modifica rata de comision
               </p>
@@ -252,15 +261,15 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
         </div>
 
         {/* Billing Information */}
-        <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>📄</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">📍</span>
             <span>Informații Facturare</span>
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Adresă Facturare *
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Adresă Facturare <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -269,67 +278,69 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Oraș *
-              </label>
-              <input
-                type="text"
-                name="billing_city"
-                value={formData.billing_city}
-                onChange={handleChange}
-                disabled={!isEditing || loading}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Oraș <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="billing_city"
+                  value={formData.billing_city}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Județ *
-              </label>
-              <input
-                type="text"
-                name="billing_county"
-                value={formData.billing_county}
-                onChange={handleChange}
-                disabled={!isEditing || loading}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Județ <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="billing_county"
+                  value={formData.billing_county}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cod Poștal *
-              </label>
-              <input
-                type="text"
-                name="billing_postal_code"
-                value={formData.billing_postal_code}
-                onChange={handleChange}
-                disabled={!isEditing || loading}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Cod Poștal <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="billing_postal_code"
+                  value={formData.billing_postal_code}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Banking Information */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>🏦</span>
+        <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏦</span>
             <span>Informații Bancare</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nume Bancă *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nume Bancă <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -338,13 +349,14 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="Ex: BCR, BRD, ING"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                IBAN *
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                IBAN <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -353,27 +365,38 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
                 onChange={handleChange}
                 disabled={!isEditing || loading}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="RO00XXXX0000000000000000"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all font-mono"
               />
             </div>
           </div>
         </div>
 
-        {/* Action Buttons - Only shown in edit mode */}
+        {/* Action Buttons */}
         {isEditing && (
-          <div className="flex gap-4 pt-6">
+          <div className="flex gap-4 pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-semibold shadow-md hover:shadow-lg"
             >
-              {loading ? 'Se salvează...' : 'Salvează Modificările'}
+              {loading ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Se salvează...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">💾</span>
+                  Salvează Modificările
+                </>
+              )}
             </button>
             <button
               type="button"
               onClick={handleCancel}
               disabled={loading}
-              className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold"
             >
               Anulează
             </button>

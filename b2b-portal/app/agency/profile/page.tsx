@@ -2,9 +2,8 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
 import { createClient } from '@/lib/supabase/server';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import AgencyProfileForm from './AgencyProfileForm';
+import Link from 'next/link';
 
 export default async function AgencyProfilePage() {
   const user = await getCurrentUser();
@@ -15,12 +14,10 @@ export default async function AgencyProfilePage() {
 
   const role = await getUserRole(user.id);
 
-  // Only active agencies can access this page
   if (role !== 'agency') {
     redirect('/dashboard');
   }
 
-  // Fetch agency data
   const supabase = await createClient();
   const { data: agencyData, error } = await supabase
     .from('agencies')
@@ -34,63 +31,57 @@ export default async function AgencyProfilePage() {
   }
 
   return (
-    <>
-      
-      
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Breadcrumb */}
-          <div className="mb-6">
-            <a 
-              href="/dashboard" 
-              className="text-orange-500 hover:text-orange-600 inline-flex items-center gap-2 font-medium transition-colors"
-            >
-              <span>←</span>
-              <span>Înapoi la Dashboard</span>
-            </a>
-          </div>
+    <div className="space-y-6">
+      {/* Back Button */}
+      <div>
+        <Link 
+          href="/agency" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition-all font-semibold shadow-md border border-gray-200"
+        >
+          <span>←</span>
+          <span>Înapoi la Dashboard</span>
+        </Link>
+      </div>
 
-          {/* Main Card */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {/* Header Section */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-8 text-white">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="text-5xl">🏢</div>
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">
-                    Profilul Agenției
-                  </h1>
-                  <p className="text-orange-100">
-                    {agencyData.company_name}
-                  </p>
-                </div>
-              </div>
+      {/* Main Card */}
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-blue-600 px-8 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-3xl">
+              🏢
             </div>
-
-            {/* Info Box */}
-            <div className="bg-blue-50 border-b border-blue-200 p-6">
-              <div className="flex items-start gap-4">
-                <span className="text-3xl">ℹ️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 mb-2 text-lg">
-                    Actualizează datele agenției tale
-                  </h3>
-                  <p className="text-blue-800">
-                    Asigură-te că toate informațiile sunt corecte și actualizate.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Section */}
-            <div className="p-8">
-              <AgencyProfileForm agencyData={agencyData} userId={user.id} />
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-1">
+                Profilul Agenției
+              </h1>
+              <p className="text-orange-100 text-sm">
+                {agencyData.company_name}
+              </p>
             </div>
           </div>
         </div>
-      </div>
 
-   
-    </>
+        {/* Info Banner */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200 p-6">
+          <div className="flex items-start gap-4">
+            <span className="text-2xl">ℹ️</span>
+            <div className="flex-1">
+              <h3 className="font-bold text-blue-900 mb-1">
+                Actualizează datele agenției tale
+              </h3>
+              <p className="text-sm text-blue-800">
+                Asigură-te că toate informațiile sunt corecte și actualizate pentru o colaborare optimă.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="p-8">
+          <AgencyProfileForm agencyData={agencyData} userId={user.id} />
+        </div>
+      </div>
+    </div>
   );
 }
