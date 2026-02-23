@@ -21,22 +21,28 @@ const rawData = fs.readFileSync(circuitsFilePath, 'utf-8');
 const jsonData = JSON.parse(rawData);
 const circuits = jsonData.circuits;
 
-console.log(`📊 Total circuite de importat: ${circuits.length}`);
+console.log('📊 IMPORT CIRCUITE ÎN SUPABASE');
+console.log('═'.repeat(60));
+console.log(`Total circuite de importat: ${circuits.length}\n`);
 
-// Funcție pentru import
+// Statistici
+const stats = {
+  inserted: 0,
+  updated: 0,
+  errors: 0,
+  errorDetails: []
+};
+
+// Funcție pentru import/update cu UPSERT
 async function importCircuits() {
-  let successCount = 0;
-  let errorCount = 0;
-  const errors = [];
-
   for (const circuit of circuits) {
     try {
-      console.log(`\n🔄 Procesez: ${circuit.name} (ID: ${circuit.id})`);
+      console.log(`🔄 Procesez: ${circuit.name} (${circuit.id})`);
 
-      // 1. INSERT CIRCUIT
-      const { data: insertedCircuit, error: circuitError } = await supabase
+      // 1. UPSERT CIRCUIT (insert sau update bazat pe external_id)
+      const { data: upsertedCircuit, error: circuitError } = await supabase
         .from('circuits')
-        .insert({
+        .upsert({
           external_id: circuit.id,
           slug: circuit.slug,
           name: circuit.name,
@@ -48,7 +54,7 @@ async function importCircuits() {
           gallery: circuit.gallery || [],
           short_description: circuit.shortDescription,
           
-          // Prețuri
+          // Prețuri actualizate
           price_double: circuit.prices.double,
           price_single: circuit.prices.single,
           price_triple: circuit.prices.triple,
@@ -58,20 +64,48 @@ async function importCircuits() {
           // Metadata
           last_scraped: circuit.lastScraped,
           is_active: true
+        }, {
+          onConflict: 'external_id',  // Dacă există deja external_id, UPDATE
+          ignoreDuplicates: false
         })
         .select()
         .single();
 
       if (circuitError) {
-        throw new Error(`Circuit insert failed: ${circuitError.message}`);
+        throw new Error(`Circuit upsert failed: ${circuitError.message}`);
       }
 
-      console.log(`   ✅ Circuit inserat: ${insertedCircuit.id}`);
+      // Verificăm dacă e INSERT nou sau UPDATE
+      const wasUpdate = await supabase
+        .from('circuits')
+        .select('id')
+        .eq('external_id', circuit.id)
+        .maybeSingle()
+        .then(res => res.data !== null);
 
-      // 2. INSERT DEPARTURES
+      if (wasUpdate) {
+        stats.updated++;
+        console.log(`   ♻️  Circuit actualizat: ${upsertedCircuit.id}`);
+      } else {
+        stats.inserted++;
+        console.log(`   ✅ Circuit inserat: ${upsertedCircuit.id}`);
+      }
+
+      // 2. ACTUALIZEAZĂ DEPARTURES (șterge vechi, inserează noi)
       if (circuit.departures && circuit.departures.length > 0) {
+        // Șterge departures vechi pentru acest circuit
+        const { error: deleteError } = await supabase
+          .from('departures')
+          .delete()
+          .eq('circuit_id', upsertedCircuit.id);
+
+        if (deleteError) {
+          console.warn(`   ⚠️  Nu pot șterge departures vechi: ${deleteError.message}`);
+        }
+
+        // Inserează departures noi
         const departuresData = circuit.departures.map(dep => ({
-          circuit_id: insertedCircuit.id,
+          circuit_id: upsertedCircuit.id,
           departure_date: dep.departureDate,
           return_date: dep.returnDate,
           room_type: dep.roomType,
@@ -88,14 +122,12 @@ async function importCircuits() {
           throw new Error(`Departures insert failed: ${departuresError.message}`);
         }
 
-        console.log(`   ✅ ${insertedDepartures.length} plecări inserate`);
+        console.log(`   📅 ${insertedDepartures.length} plecări actualizate`);
       }
 
-      successCount++;
-
     } catch (error) {
-      errorCount++;
-      errors.push({
+      stats.errors++;
+      stats.errorDetails.push({
         circuit: circuit.name,
         error: error.message
       });
@@ -104,20 +136,23 @@ async function importCircuits() {
   }
 
   // RAPORT FINAL
-  console.log('\n' + '='.repeat(60));
-  console.log('📊 RAPORT FINAL MIGRARE');
-  console.log('='.repeat(60));
-  console.log(`✅ Succese: ${successCount}`);
-  console.log(`❌ Erori: ${errorCount}`);
+  console.log('\n' + '═'.repeat(60));
+  console.log('📊 RAPORT FINAL IMPORT');
+  console.log('═'.repeat(60));
+  console.log(`✅ Circuite noi inserate: ${stats.inserted}`);
+  console.log(`♻️  Circuite actualizate: ${stats.updated}`);
+  console.log(`❌ Erori: ${stats.errors}`);
+  console.log(`📦 Total circuite în DB: ${stats.inserted + stats.updated}`);
   
-  if (errors.length > 0) {
+  if (stats.errorDetails.length > 0) {
     console.log('\n🔴 Detalii erori:');
-    errors.forEach((err, index) => {
+    stats.errorDetails.forEach((err, index) => {
       console.log(`${index + 1}. ${err.circuit}: ${err.error}`);
     });
   }
 
-  console.log('\n✨ Migrare completă!');
+  console.log('\n✨ Import/Update complet!');
+  console.log('═'.repeat(60));
 }
 
 // RUN
@@ -130,4 +165,3 @@ importCircuits()
     console.error('\n💥 Eroare fatală:', error);
     process.exit(1);
   });
-

@@ -360,7 +360,7 @@ export default async function CircuitPage({
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Price Card - cu prima plecare disponibilă */}
-              <div className="bg-white rounded-xl p-6 shadow-lg sticky top-20 border-2 border-orange-100 max-h-[calc(100vh-6rem)] overflow-y-auto">
+              <div className="bg-white rounded-xl p-6 shadow-lg top-20 border-2 border-orange-100 max-h-[calc(100vh-6rem)] overflow-y-auto">
                 <div className="text-center mb-6">
                   <div className="text-sm text-gray-600 mb-2">Preț agenție de la</div>
                   <div className="text-5xl font-bold text-orange-500">
