@@ -312,49 +312,6 @@ export default async function CircuitPage({
                   </div>
                 )}
               </div>
-
-              {/* Program complet - Iframe */}
-              {circuit.url && (
-                <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6">
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <span>📋</span>
-                      <span>Program complet și detalii circuit</span>
-                    </h2>
-                    <p className="text-orange-100 text-sm mt-2">
-                      Program zilnic, servicii incluse/neincluse, excursii opționale
-                    </p>
-                  </div>
-
-                  <div className="relative">
-                    <iframe
-                      src={circuit.url}
-                      className="w-full border-0 bg-white"
-                      style={{
-                        minHeight: '1500px',
-                        height: 'auto'
-                      }}
-                      title="Detalii circuit complet"
-                      loading="lazy"
-                    />
-
-                    <div className="p-4 bg-white border-t border-gray-200 flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
-                        💡 Conținut preluat direct de pe jinfotours.ro
-                      </span>
-                      <a
-                        href={circuit.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium transition-colors text-sm"
-                      >
-                        <span>🔗 Deschide în fereastră nouă</span>
-                        <span>↗</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Sidebar */}
@@ -473,6 +430,49 @@ export default async function CircuitPage({
               </div>
             </div>
           </div>
+
+          {/* Program complet - Iframe FULL WIDTH */}
+          {circuit.url && (
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm mt-8">
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <span>📋</span>
+                  <span>Program complet și detalii circuit</span>
+                </h2>
+                <p className="text-orange-100 text-sm mt-2">
+                  Program zilnic, servicii incluse/neincluse, excursii opționale
+                </p>
+              </div>
+
+              <div className="relative">
+                <iframe
+                  src={circuit.url}
+                  className="w-full border-0 bg-white"
+                  style={{
+                    minHeight: '1500px',
+                    height: 'auto'
+                  }}
+                  title="Detalii circuit complet"
+                  loading="lazy"
+                />
+
+                <div className="p-4 bg-white border-t border-gray-200 flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    💡 Conținut preluat direct de pe jinfotours.ro
+                  </span>
+                  <a
+                    href={circuit.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium transition-colors text-sm"
+                  >
+                    <span>🔗 Deschide în fereastră nouă</span>
+                    <span>↗</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
