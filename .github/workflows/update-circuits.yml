@@ -1,0 +1,93 @@
+name: Actualizare Circuite J'Info
+
+on:
+  # Trigger manual din Admin (via GitHub API)
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: 'Cine a declanșat actualizarea'
+        required: false
+        default: 'admin'
+
+  # Cron automat - în fiecare luni dimineața la 06:00 (ora României)
+  schedule:
+    - cron: '0 4 * * 1'  # UTC 04:00 = RO 06:00 (iarna) / 07:00 (vara)
+
+jobs:
+  update-circuits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # Max 2 ore pentru scraping
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. Instalează dependențe scraper
+      - name: Instalează dependențe scraper
+        run: |
+          cd scraper
+          npm install
+
+      # 4. Instalează Playwright + browser
+      - name: Instalează Playwright Chromium
+        run: |
+          cd scraper
+          npx playwright install chromium
+          npx playwright install-deps chromium
+
+      # 5. Rulează scraper-ul
+      - name: Rulează scraping circuite
+        run: |
+          cd scraper
+          node scraper_v2_optimized.js
+        env:
+          CI: true
+
+      # 6. Verifică că JSON-ul a fost generat
+      - name: Verifică output scraper
+        run: |
+          if [ ! -f scraper/circuits_data_complete.json ]; then
+            echo "❌ EROARE: circuits_data_complete.json nu a fost generat!"
+            exit 1
+          fi
+          echo "✅ JSON generat cu succes"
+          node -e "
+            const data = require('./scraper/circuits_data_complete.json');
+            console.log('📦 Circuite extrase:', data.circuits?.length || 0);
+          "
+
+      # 7. Instalează dependențe migration
+      - name: Instalează dependențe migration
+        run: |
+          cd migration
+          npm install
+
+      # 8. Rulează UPSERT în Supabase
+      - name: Import circuite în Supabase
+        run: |
+          cd migration
+          node import_circuits_upsert.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # 9. Raport final
+      - name: Raport final
+        if: always()
+        run: |
+          echo "================================"
+          echo "✅ Actualizare circuite completă"
+          echo "Data: $(date)"
+          echo "Declanșat de: ${{ github.event.inputs.triggered_by || 'cron' }}"
+          echo "================================"
+          if [ -f scraper/SCRAPING_REPORT.txt ]; then
+            echo "📊 RAPORT SCRAPING:"
+            cat scraper/SCRAPING_REPORT.txt
+          fi
