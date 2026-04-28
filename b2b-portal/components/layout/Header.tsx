@@ -56,6 +56,7 @@ export default function Header({ role = null }: HeaderProps) {
     { href: '/admin/payments', label: 'Plăți', icon: '💰' },
     { href: '/admin/agencies', label: 'Agenții', icon: '🏢' },
     { href: '/admin/create-agency', label: 'Creare Agenție', icon: '➕', mobileLabel: 'Creare' },
+    { href: '/admin/scraping', label: 'Actualizare Circuite', icon: '🔄', mobileLabel: 'Actualizare' },
   ];
 
   // Agency navigation links
