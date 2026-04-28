@@ -42,7 +42,7 @@ jobs:
           npx playwright install chromium
           npx playwright install-deps chromium
 
-      # 5. Rulează scraper-ul
+      # 5. Rulează scraper-ul principal
       - name: Rulează scraping circuite
         run: |
           cd scraper
@@ -50,7 +50,15 @@ jobs:
         env:
           CI: true
 
-      # 6. Verifică că JSON-ul a fost generat
+      # 5.5. Adaugă circuitele lipsă (Papua Noua Guinee, Tahiti)
+      # Acestea nu apar în scraping-ul principal și sunt adăugate manual
+      - name: Adaugă circuite lipsă
+        run: |
+          cd scraper
+          node add_missing_circuits.js
+        continue-on-error: true  # Nu opri workflow dacă eșuează
+
+      # 6. Verifică că JSON-ul a fost generat și are date
       - name: Verifică output scraper
         run: |
           if [ ! -f scraper/circuits_data_complete.json ]; then
@@ -70,6 +78,7 @@ jobs:
           npm install
 
       # 8. Rulează UPSERT în Supabase
+      # Folosim calea relativă din root pentru a evita probleme cu cd
       - name: Import circuite în Supabase
         run: node migration/import_circuits_upsert.js
         env:
