@@ -71,9 +71,7 @@ jobs:
 
       # 8. Rulează UPSERT în Supabase
       - name: Import circuite în Supabase
-        run: |
-          cd migration
-          node import_circuits_upsert.js
+        run: node migration/import_circuits_upsert.js
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
