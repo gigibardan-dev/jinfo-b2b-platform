@@ -1,4 +1,3 @@
-// app/agency/profile/AgencyProfileForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -26,6 +25,42 @@ interface AgencyProfileFormProps {
   userId: string;
 }
 
+// ── Helper: input cu toggle vizibilitate parolă
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  required = false,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        minLength={required ? 8 : undefined}
+        required={required}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors text-xl"
+        tabIndex={-1}
+      >
+        {show ? '🙈' : '👁️'}
+      </button>
+    </div>
+  );
+}
+
 export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -47,11 +82,18 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
     bank_account: agencyData.bank_account || '',
   });
 
+  // ── Parola state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,10 +127,8 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
 
       setSuccess(true);
       setIsEditing(false);
-      
-      setTimeout(() => {
-        router.refresh();
-      }, 1000);
+
+      setTimeout(() => { router.refresh(); }, 1000);
 
     } catch (err: any) {
       console.error('Error updating profile:', err);
@@ -116,11 +156,50 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
     setError('');
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError('Parola nouă trebuie să aibă minim 8 caractere');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Parolele nu coincid');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const response = await fetch('/api/agency/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Eroare la schimbarea parolei');
+
+      setPasswordSuccess(true);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+    } catch (err: any) {
+      setPasswordError(err.message);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <div>
-      {/* Success Message */}
+      {/* Success Message - Profil */}
       {success && (
-        <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl animate-pulse">
+        <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
           <div className="flex items-center gap-3">
             <span className="text-green-500 text-2xl">✅</span>
             <div>
@@ -131,7 +210,7 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
         </div>
       )}
 
-      {/* Error Message */}
+      {/* Error Message - Profil */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
           <div className="flex items-center gap-3">
@@ -372,7 +451,7 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Profil */}
         {isEditing && (
           <div className="flex gap-4 pt-4">
             <button
@@ -381,15 +460,13 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
               className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-semibold shadow-md hover:shadow-lg"
             >
               {loading ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Se salvează...
-                </>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span> Se salvează...
+                </span>
               ) : (
-                <>
-                  <span className="mr-2">💾</span>
-                  Salvează Modificările
-                </>
+                <span className="flex items-center justify-center gap-2">
+                  <span>💾</span> Salvează Modificările
+                </span>
               )}
             </button>
             <button
@@ -403,6 +480,88 @@ export default function AgencyProfileForm({ agencyData, userId }: AgencyProfileF
           </div>
         )}
       </form>
+
+      {/* ── Schimbare Parolă */}
+      <div className="mt-6 bg-gray-50 rounded-xl p-6 border-2 border-indigo-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+          <span className="text-xl">🔐</span>
+          <span>Schimbare Parolă</span>
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Introdu parola curentă și apoi parola nouă dorită.
+        </p>
+
+        {passwordSuccess && (
+          <div className="mb-4 p-3 bg-green-50 border-2 border-green-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-green-500">✅</span>
+              <span className="text-sm font-semibold text-green-800">
+                Parola a fost schimbată cu succes!
+              </span>
+            </div>
+          </div>
+        )}
+
+        {passwordError && (
+          <div className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-red-500">⚠️</span>
+              <span className="text-sm text-red-700">{passwordError}</span>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Parola curentă <span className="text-red-500">*</span>
+            </label>
+            <PasswordInput
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              placeholder="Parola actuală"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Parolă nouă <span className="text-red-500">*</span>
+            </label>
+            <PasswordInput
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              placeholder="Minim 8 caractere"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Confirmă parola <span className="text-red-500">*</span>
+            </label>
+            <PasswordInput
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+              placeholder="Repetă parola nouă"
+              required
+            />
+          </div>
+
+          <div className="md:col-span-3">
+            <button
+              type="submit"
+              disabled={passwordLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-md flex items-center gap-2"
+            >
+              {passwordLoading ? (
+                <><span className="animate-spin">⏳</span> Se schimbă...</>
+              ) : (
+                <><span>🔐</span> Schimbă Parola</>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

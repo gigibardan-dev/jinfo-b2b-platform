@@ -16,16 +16,14 @@ export default async function AdminLayout({
 
   const role = await getUserRole(user.id);
 
-  // Only admins can access this section
   if (role !== 'admin' && role !== 'superadmin' && role !== 'operator') {
     redirect('/dashboard');
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <Header role="admin" />
+      <Header role={role as 'admin' | 'superadmin' | 'operator'} />
       
-      {/* Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>

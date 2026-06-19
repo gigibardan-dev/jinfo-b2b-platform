@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 
 interface HeaderProps {
-  role?: 'admin' | 'agency' | null;
+  role?: 'admin' | 'superadmin' | 'operator' | 'agency' | null;
 }
 
 export default function Header({ role = null }: HeaderProps) {
@@ -20,7 +20,7 @@ export default function Header({ role = null }: HeaderProps) {
 
   useEffect(() => {
     const supabase = createClient();
-   
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setLoading(false);
@@ -57,6 +57,11 @@ export default function Header({ role = null }: HeaderProps) {
     { href: '/admin/agencies', label: 'Agenții', icon: '🏢' },
     { href: '/admin/create-agency', label: 'Creare Agenție', icon: '➕', mobileLabel: 'Creare' },
     { href: '/admin/scraping', label: 'Actualizare Circuite', icon: '🔄', mobileLabel: 'Actualizare' },
+    { href: '/admin/profile', label: 'Profilul Meu', icon: '👤', mobileLabel: 'Profil' },
+    // Doar superadmin
+    ...(role === 'superadmin' ? [
+      { href: '/admin/staff', label: 'Staff', icon: '👥', mobileLabel: 'Staff' }
+    ] : []),
   ];
 
   // Agency navigation links
@@ -67,8 +72,11 @@ export default function Header({ role = null }: HeaderProps) {
     { href: '/agency/profile', label: 'Profil', icon: '👤' },
   ];
 
-  const navLinks = role === 'admin' ? adminLinks : role === 'agency' ? agencyLinks : [];
-
+  const navLinks = (role === 'admin' || role === 'superadmin' || role === 'operator')
+    ? adminLinks
+    : role === 'agency'
+      ? agencyLinks
+      : [];
   return (
     <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,7 +97,7 @@ export default function Header({ role = null }: HeaderProps) {
               Portal Agenții
             </span>
           </Link>
-         
+
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             <a
