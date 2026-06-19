@@ -33,19 +33,40 @@ async function getCircuit(slug: string) {
   return circuit as Circuit & { departures: Departure[] };
 }
 
+async function getAgencyCommission(): Promise<number> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 8;
+
+    const { data: agency } = await supabase
+      .from('agencies')
+      .select('commission_rate')
+      .eq('user_id', user.id)
+      .single();
+
+    return agency?.commission_rate ?? 8;
+  } catch {
+    return 8;
+  }
+}
+
 export default async function CircuitPage({
   params
 }: {
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params;
-  const circuit = await getCircuit(slug);
+  const [circuit, agencyCommission] = await Promise.all([
+    getCircuit(slug),
+    getAgencyCommission(),
+  ]);
 
   if (!circuit) {
     notFound();
   }
 
-  const agencyCommission = 10;
+  // const agencyCommission = 8; <- ȘTERS, vine din DB
   const basePrice = circuit.price_double || 0;
   const agencyPrice = Math.round(basePrice - (basePrice * agencyCommission / 100));
 
@@ -80,7 +101,6 @@ export default async function CircuitPage({
 
   const monthGroups = Object.values(departuresByMonth);
   const priceOptions = Array.isArray(circuit.price_options) ? circuit.price_options : [];
-
   return (
     <>
       <Header />
@@ -356,7 +376,7 @@ export default async function CircuitPage({
                 )}
 
                 <p className="text-xs text-gray-500 text-center mt-3 leading-relaxed">
-                  {circuit.departures?.[0] 
+                  {circuit.departures?.[0]
                     ? 'Pre-rezervarea necesită validare de la J\'Info Tours (răspuns în max 24h)'
                     : 'Momentan nu există plecări disponibile pentru acest circuit'
                   }

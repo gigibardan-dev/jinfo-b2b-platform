@@ -8,10 +8,12 @@ import type { Circuit } from '@/lib/types/database';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+
 export default function HomePage() {
   const [circuits, setCircuits] = useState<Circuit[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [agencyCommission, setAgencyCommission] = useState(8);
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContinent, setSelectedContinent] = useState('all');
@@ -19,13 +21,13 @@ export default function HomePage() {
   const [nightsFilter, setNightsFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
   // Load circuits from Supabase
   useEffect(() => {
     async function loadCircuits() {
       try {
         const supabase = createClient();
-        
+
         const { data, error } = await supabase
           .from('circuits')
           .select(`
@@ -47,6 +49,21 @@ export default function HomePage() {
         }
 
         setCircuits(data || []);
+
+        // Fetch comision agenție logată
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: agency } = await supabase
+            .from('agencies')
+            .select('commission_rate')
+            .eq('user_id', user.id)
+            .single();
+
+          if (agency?.commission_rate) {
+            setAgencyCommission(agency.commission_rate);
+          }
+        }
+
       } catch (error) {
         console.error('Error loading circuits:', error);
       } finally {
@@ -55,13 +72,13 @@ export default function HomePage() {
     }
     loadCircuits();
   }, []);
-  
+
   // Stats
   const stats = useMemo(() => {
     const continents = new Set(circuits.map(c => c.continent));
     const totalDepartures = circuits.reduce((sum, c) => sum + (c.departures?.length || 0), 0);
     const avgPrice = circuits.reduce((sum, c) => sum + (c.price_double || 0), 0) / circuits.length;
-    
+
     return {
       totalCircuits: circuits.length,
       continents: continents.size,
@@ -69,32 +86,32 @@ export default function HomePage() {
       avgPrice: Math.round(avgPrice)
     };
   }, [circuits]);
-  
+
   // Filtered & Sorted Circuits
   const filteredCircuits = useMemo(() => {
     let filtered = circuits;
-    
+
     // Search
     if (searchQuery) {
-      filtered = filtered.filter(c => 
+      filtered = filtered.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.continent.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Continent
     if (selectedContinent !== 'all') {
-      filtered = filtered.filter(c => 
+      filtered = filtered.filter(c =>
         c.continent.toLowerCase() === selectedContinent.toLowerCase()
       );
     }
-    
+
     // Price Range
     filtered = filtered.filter(c => {
       const price = c.price_double || 0;
       return price >= priceRange[0] && price <= priceRange[1];
     });
-    
+
     // Nights
     if (nightsFilter !== 'all') {
       filtered = filtered.filter(c => {
@@ -105,7 +122,7 @@ export default function HomePage() {
         return true;
       });
     }
-    
+
     // Sort
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -114,10 +131,10 @@ export default function HomePage() {
       if (sortBy === 'popular') return (b.departures?.length || 0) - (a.departures?.length || 0);
       return 0;
     });
-    
+
     return filtered;
   }, [circuits, searchQuery, selectedContinent, priceRange, nightsFilter, sortBy]);
-  
+
   // Reset Filters
   const resetFilters = () => {
     setSearchQuery('');
@@ -126,7 +143,7 @@ export default function HomePage() {
     setNightsFilter('all');
     setSortBy('name');
   };
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50">
@@ -137,18 +154,18 @@ export default function HomePage() {
       </div>
     );
   }
-  
-  const agencyCommission = 10;
-  
+
+  // const agencyCommission = 8; <- ȘTERS, vine din state
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50">
       <Header />
-      
+
       {/* Hero Stats */}
       <div className="bg-gradient-to-r from-blue-600 to-orange-500 text-white py-8">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl font-bold mb-6">Portal B2B - Circuite Turistice</h1>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-3xl font-bold">{stats.totalCircuits}</div>
@@ -169,7 +186,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      
+
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Search & Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -191,7 +208,7 @@ export default function HomePage() {
               </button>
             )}
           </div>
-          
+
           {/* Filters Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             {/* Continent Filter */}
@@ -212,7 +229,7 @@ export default function HomePage() {
                 <option value="oceania">Oceania</option>
               </select>
             </div>
-            
+
             {/* Price Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,7 +250,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Nights Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -250,7 +267,7 @@ export default function HomePage() {
                 <option value="11+">11+ nopți</option>
               </select>
             </div>
-            
+
             {/* Sort By */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -268,13 +285,13 @@ export default function HomePage() {
               </select>
             </div>
           </div>
-          
+
           {/* Filter Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
               <span className="font-semibold text-gray-900">{filteredCircuits.length}</span> circuite găsite
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={resetFilters}
@@ -282,7 +299,7 @@ export default function HomePage() {
               >
                 🔄 Resetează filtre
               </button>
-              
+
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
@@ -300,7 +317,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        
+
         {/* Results */}
         {filteredCircuits.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
@@ -322,7 +339,7 @@ export default function HomePage() {
               const savings = Math.round(basePrice - agencyPrice);
               const nightsCount = circuit.nights?.match(/\d+/)?.[0] || 'N/A';
               const priceOptionsCount = Array.isArray(circuit.price_options) ? circuit.price_options.length : 0;
-              
+
               if (viewMode === 'list') {
                 return (
                   <Link
@@ -344,13 +361,13 @@ export default function HomePage() {
                           {circuit.continent}
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 p-6 flex flex-col justify-between">
                         <div>
                           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors">
                             {circuit.name}
                           </h3>
-                          
+
                           <div className="flex flex-wrap gap-3 mb-4">
                             <span className="inline-flex items-center gap-1 text-sm text-gray-600">
                               🌙 {nightsCount} nopți
@@ -363,7 +380,7 @@ export default function HomePage() {
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-end justify-between">
                           <div>
                             <div className="text-sm text-gray-500 line-through">
@@ -376,7 +393,7 @@ export default function HomePage() {
                               Economie: {savings} EUR ({agencyCommission}%)
                             </div>
                           </div>
-                          
+
                           <button className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
                             Vezi detalii →
                           </button>
@@ -386,7 +403,7 @@ export default function HomePage() {
                   </Link>
                 );
               }
-              
+
               return (
                 <Link
                   key={circuit.id}
@@ -403,22 +420,22 @@ export default function HomePage() {
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    
+
                     <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
                       {circuit.continent}
                     </div>
-                    
+
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-900 shadow-lg">
                       🌙 {nightsCount} nopți
                     </div>
-                    
+
                     <div className="absolute bottom-3 left-3 right-3">
                       <h3 className="text-white font-bold text-lg line-clamp-2 drop-shadow-lg">
                         {circuit.name}
                       </h3>
                     </div>
                   </div>
-                  
+
                   <div className="p-5">
                     <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
@@ -428,7 +445,7 @@ export default function HomePage() {
                         💰 {priceOptionsCount} opțiuni
                       </span>
                     </div>
-                    
+
                     <div className="border-t border-gray-200 pt-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500">Preț public:</span>
@@ -436,21 +453,21 @@ export default function HomePage() {
                           {Math.round(basePrice)} EUR
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-lg font-semibold text-gray-900">Preț agenție:</span>
                         <span className="text-2xl font-bold text-orange-500">
                           {agencyPrice} EUR
                         </span>
                       </div>
-                      
+
                       <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                         <span className="text-sm text-green-700 font-medium">
-                          💚 Economisești {savings} EUR ({agencyCommission}%)
+                          💚 Comision {savings} EUR ({agencyCommission}%)
                         </span>
                       </div>
                     </div>
-                    
+
                     <button className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 font-medium shadow-lg group-hover:shadow-xl">
                       Vezi detalii și pre-rezervă →
                     </button>
@@ -461,7 +478,7 @@ export default function HomePage() {
           </div>
         )}
       </main>
-      
+
       <Footer />
     </div>
   );

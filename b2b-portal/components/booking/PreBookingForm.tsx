@@ -13,6 +13,7 @@ interface PreBookingFormProps {
   priceOption: any;
   allPriceOptions: any[];
   initialPriceOptionIndex: number;
+  commissionRate: number;
 }
 
 // Helper function pentru a detecta capacitatea camerei din type
@@ -67,7 +68,8 @@ export default function PreBookingForm({
   agencyId,
   priceOption: initialPriceOption,
   allPriceOptions,
-  initialPriceOptionIndex
+  initialPriceOptionIndex,
+  commissionRate
 }: PreBookingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -112,7 +114,8 @@ export default function PreBookingForm({
   // CALCULARE CORECTĂ: Prețul din price_option e deja pentru opțiunea respectivă
   const totalPeople = formData.num_adults + formData.num_children;
   const pricePublicTotal = selectedPriceOption.price || circuit.price_double || 0; // Preț PUBLIC
-  const agencyCommission = 10;
+  const agencyCommission = commissionRate ?? 8;
+
   
   // Prețul pentru agenție (cu comision aplicat)
   const agencyPriceTotal = Math.round(pricePublicTotal - (pricePublicTotal * agencyCommission / 100));

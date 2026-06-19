@@ -180,6 +180,7 @@ export default async function BookingPage({
                 priceOption={priceOption}
                 allPriceOptions={priceOptions}
                 initialPriceOptionIndex={selectedPriceOptionIndex}
+                commissionRate={agencyData.commission_rate} 
               />
             </div>
 

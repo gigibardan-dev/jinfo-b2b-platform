@@ -1,0 +1,188 @@
+.
+|-- b2b-portal
+|   |-- app
+|   |   |-- admin
+|   |   |   |-- agencies
+|   |   |   |   `-- page.tsx
+|   |   |   |-- bookings
+|   |   |   |   |-- [id]
+|   |   |   |   |   |-- BookingDetailsClient.tsx
+|   |   |   |   |   `-- page.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   |-- create-agency
+|   |   |   |   |-- CreateAgencyForm.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   |-- dashboard
+|   |   |   |   `-- page.tsx
+|   |   |   |-- payments
+|   |   |   |   |-- PaymentsDashboardClient.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   |-- scraping
+|   |   |   |   `-- page.tsx
+|   |   |   `-- layout.tsx
+|   |   |-- agency
+|   |   |   |-- bookings
+|   |   |   |   |-- [id]
+|   |   |   |   |   |-- AgencyBookingDetailsClient.tsx
+|   |   |   |   |   `-- page.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   |-- dashboard
+|   |   |   |   `-- page.tsx
+|   |   |   |-- payments
+|   |   |   |   |-- AgencyPaymentsDashboardClient.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   |-- profile
+|   |   |   |   |-- AgencyProfileForm.tsx
+|   |   |   |   `-- page.tsx
+|   |   |   `-- layout.tsx
+|   |   |-- api
+|   |   |   |-- admin
+|   |   |   |   |-- agencies
+|   |   |   |   |   |-- activate
+|   |   |   |   |   |   `-- route.ts
+|   |   |   |   |   |-- suspend
+|   |   |   |   |   |   `-- route.ts
+|   |   |   |   |   `-- update
+|   |   |   |   |       `-- route.ts
+|   |   |   |   `-- scraping
+|   |   |   |       `-- route.ts
+|   |   |   |-- circuits
+|   |   |   |   `-- route.ts
+|   |   |   |-- documents
+|   |   |   |   |-- [id]
+|   |   |   |   |   `-- route.ts
+|   |   |   |   `-- route.ts
+|   |   |   |-- payments
+|   |   |   |   |-- [id]
+|   |   |   |   |   `-- route.ts
+|   |   |   |   `-- route.ts
+|   |   |   `-- v1
+|   |   |       |-- bookings
+|   |   |       |   |-- [booking_number]
+|   |   |       |   |   `-- route.ts
+|   |   |       |   `-- route.ts
+|   |   |       `-- circuits
+|   |   |           |-- [slug]
+|   |   |           |   `-- route.ts
+|   |   |           `-- route.ts
+|   |   |-- auth
+|   |   |   |-- login
+|   |   |   |   `-- page.tsx
+|   |   |   |-- register
+|   |   |   |   `-- page.tsx
+|   |   |   `-- layout.tsx
+|   |   |-- circuits
+|   |   |   `-- [slug]
+|   |   |       |-- book
+|   |   |       |   `-- page.tsx
+|   |   |       |-- not-found.tsx
+|   |   |       `-- page.tsx
+|   |   |-- dashboard
+|   |   |   `-- page.tsx
+|   |   |-- globals.css
+|   |   |-- layout.tsx
+|   |   `-- page.tsx
+|   |-- components
+|   |   |-- admin
+|   |   |   |-- agencies
+|   |   |   |   |-- AgenciesTable.tsx
+|   |   |   |   |-- AgenciesTableClient.tsx
+|   |   |   |   |-- AgencyDetailsModal.tsx
+|   |   |   |   |-- AgencyFilters.tsx
+|   |   |   |   |-- EditAgencyModal.tsx
+|   |   |   |   `-- StatCard.tsx
+|   |   |   `-- AdminBookingCard.tsx
+|   |   |-- agency
+|   |   |   |-- AgencyBookingCard.tsx
+|   |   |   |-- AgencyBookingCardHorizontal.tsx
+|   |   |   `-- AgencyBookingsClient.tsx
+|   |   |-- booking
+|   |   |   `-- PreBookingForm.tsx
+|   |   |-- circuits
+|   |   |   `-- CircuitCard.tsx
+|   |   |-- documents
+|   |   |   |-- DocumentUpload.tsx
+|   |   |   `-- DocumentsList.tsx
+|   |   |-- layout
+|   |   |   |-- Footer.tsx
+|   |   |   `-- Header.tsx
+|   |   |-- payments
+|   |   |   |-- PaymentBadge.tsx
+|   |   |   |-- PaymentFormModal.tsx
+|   |   |   `-- PaymentsList.tsx
+|   |   `-- ui
+|   |       |-- alert-dialog.tsx
+|   |       |-- badge.tsx
+|   |       |-- button.tsx
+|   |       |-- card.tsx
+|   |       |-- dialog.tsx
+|   |       |-- dropdown-menu.tsx
+|   |       |-- input.tsx
+|   |       |-- label.tsx
+|   |       |-- select.tsx
+|   |       |-- separator.tsx
+|   |       |-- skeleton.tsx
+|   |       |-- success-dialog.tsx
+|   |       |-- table.tsx
+|   |       `-- tabs.tsx
+|   |-- lib
+|   |   |-- api
+|   |   |   `-- validateApiKey.ts
+|   |   |-- auth
+|   |   |   `-- utils.ts
+|   |   |-- services
+|   |   |   |-- agencies.ts
+|   |   |   |-- documents.ts
+|   |   |   `-- payments.ts
+|   |   |-- supabase
+|   |   |   |-- client.ts
+|   |   |   `-- server.ts
+|   |   |-- types
+|   |   |   |-- agency.ts
+|   |   |   |-- database.ts
+|   |   |   |-- document.ts
+|   |   |   `-- payment.ts
+|   |   `-- utils.ts
+|   |-- public
+|   |   |-- file.svg
+|   |   |-- globe.svg
+|   |   |-- logo-jinfotours.svg
+|   |   |-- next.svg
+|   |   |-- vercel.svg
+|   |   `-- window.svg
+|   |-- IMPLEMENTATION_SUMMARY.md
+|   |-- PROJECT_KNOWLEDGE_B2B_PLATFORM.md
+|   |-- PROJECT_STATUS_COMPLETE.md
+|   |-- README.md
+|   |-- eslint.config.mjs
+|   |-- middleware.ts
+|   |-- next-env.d.ts
+|   |-- next.config.ts
+|   |-- package-lock.json
+|   |-- package.json
+|   |-- postcss.config.mjs
+|   |-- project_structure.txt
+|   `-- tsconfig.json
+|-- migration
+|   |-- GHID_ACTUALIZARE_CIRCUITE.md
+|   |-- clear_circuits.js
+|   |-- import_circuits.js
+|   |-- import_circuits_upsert.js
+|   |-- package-lock.json
+|   `-- package.json
+|-- scraper
+|   |-- SCRAPING_REPORT.txt
+|   |-- add_missing_circuits.js
+|   |-- circuits_data_complete.json
+|   |-- circuits_data_complete.txt
+|   |-- package-lock.json
+|   |-- package.json
+|   |-- scraper_v2_optimized.js
+|   |-- test_3_circuits_simple.js
+|   |-- test_namibia.js
+|   `-- test_single_circuit.js
+|-- API_Documentation_JInfo_B2B_v2.md
+|-- STATUS_REAL.md
+`-- project_structure.txt
+
+59 directories, 126 files

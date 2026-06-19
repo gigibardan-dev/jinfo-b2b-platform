@@ -16,7 +16,7 @@ on:
 jobs:
   update-circuits:
     runs-on: ubuntu-latest
-    timeout-minutes: 120  # Max 2 ore pentru scraping
+    timeout-minutes: 360  # Max 6 ore pentru scraping
 
     steps:
       # 1. Checkout repo

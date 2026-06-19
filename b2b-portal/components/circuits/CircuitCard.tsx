@@ -18,7 +18,7 @@ interface CircuitCardProps {
   agencyCommission?: number; // Default 10%
 }
 
-export default function CircuitCard({ circuit, agencyCommission = 10 }: CircuitCardProps) {
+export default function CircuitCard({ circuit, agencyCommission = 8 }: CircuitCardProps) {
   // Calculează prețul pentru agenție (cu comision)
   const basePrice = circuit.prices.double || 0;
   const agencyPrice = basePrice - (basePrice * agencyCommission / 100);

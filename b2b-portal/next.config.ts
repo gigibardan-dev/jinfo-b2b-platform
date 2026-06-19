@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         hostname: 'ibe.jinfotours.ro',
         pathname: '/resources/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ibe2.jinfotours.ro',
+      },
     ],
   },
 };
