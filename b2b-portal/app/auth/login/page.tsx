@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient();
-      
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -31,10 +32,11 @@ export default function LoginPage() {
         throw signInError;
       }
 
-      // Login success - redirect to dashboard
-      router.push('/dashboard');
+      // Redirect către pagina solicitată inițial, sau dashboard ca fallback
+      const redirectTo = searchParams.get('redirectTo');
+      router.push(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard');
       router.refresh();
-      
+
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Email sau parolă incorectă');
@@ -46,7 +48,7 @@ export default function LoginPage() {
   return (
     <>
       <Header />
-      
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full">
           {/* Card */}
@@ -116,8 +118,8 @@ export default function LoginPage() {
 
               {/* Forgot Password */}
               <div className="text-right">
-                <Link 
-                  href="/auth/reset-password" 
+                <Link
+                  href="/auth/reset-password"
                   className="text-sm text-orange-500 hover:text-orange-600 transition-colors"
                 >
                   Ai uitat parola?
@@ -183,12 +185,12 @@ export default function LoginPage() {
 
           {/* Back to Home */}
           <div className="mt-6 text-center">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-2"
             >
               <span>←</span>
-              <span>Înapoi la circuite</span>
+              <span>Înapoi acasă</span>
             </Link>
           </div>
         </div>

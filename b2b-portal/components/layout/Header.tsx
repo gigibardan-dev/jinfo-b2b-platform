@@ -101,7 +101,7 @@ export default function Header({ role = null }: HeaderProps) {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             <a
-              href="mailto:info@jinfotours.ro"
+              href="mailto:office@jinfotours.ro"
               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-orange-500 transition-colors font-medium rounded-lg hover:bg-gray-50"
             >
               <span className="text-lg">📧</span>
@@ -215,11 +215,11 @@ export default function Header({ role = null }: HeaderProps) {
             {/* Mobile Actions */}
             <div className="space-y-2 pt-2">
               <a
-                href="mailto:info@jinfotours.ro"
+                href="mailto:office@jinfotours.ro"
                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 font-semibold rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <span className="text-xl">📧</span>
-                <span>Contact: info@jinfotours.ro</span>
+                <span>Contact: office@jinfotours.ro</span>
               </a>
 
               {loading ? (

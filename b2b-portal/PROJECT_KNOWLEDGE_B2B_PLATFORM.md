@@ -1126,7 +1126,7 @@ export async function POST(req: Request) {
 
 ### J'Info Tours Contact
 - **Website:** https://www.jinfotours.ro
-- **Email:** info@jinfotours.ro
+- **Email:** office@jinfotours.ro
 - **Phone:** (contact info)
 
 ### Acqua Development (qTravel)

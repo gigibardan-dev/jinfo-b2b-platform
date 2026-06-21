@@ -33,19 +33,31 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
-      // Not authenticated - redirect to login
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url)
-    }
+  const pathname = request.nextUrl.pathname
+
+  // ── Rute protejate — necesită autentificare
+  const protectedPaths = [
+    '/dashboard',
+    '/circuits',
+    '/agency',
+    '/admin',
+  ]
+
+  const isProtected = protectedPaths.some(path => pathname.startsWith(path))
+
+  if (isProtected && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    // Salvează URL-ul original pentru redirect după login
+    url.searchParams.set('redirectTo', pathname)
+    return NextResponse.redirect(url)
   }
 
-  // Auth routes - redirect to dashboard if already logged in
-  if (request.nextUrl.pathname.startsWith('/auth/login') || 
-      request.nextUrl.pathname.startsWith('/auth/register')) {
+  // ── Rute auth — redirect la dashboard dacă deja logat
+  if (
+    pathname.startsWith('/auth/login') ||
+    pathname.startsWith('/auth/register')
+  ) {
     if (user) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
@@ -64,7 +76,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (public folder)
+     * - api routes (handled separately)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

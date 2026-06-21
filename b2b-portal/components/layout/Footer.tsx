@@ -42,7 +42,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex items-start gap-2">
                 <span>📧</span>
-                <span>info@jinfotours.ro</span>
+                <span>office@jinfotours.ro</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>📞</span>

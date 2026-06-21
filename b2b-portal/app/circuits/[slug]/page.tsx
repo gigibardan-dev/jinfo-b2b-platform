@@ -438,7 +438,7 @@ export default async function CircuitPage({
                 <div className="flex items-start gap-3">
                   <span className="text-xl">📞</span>
                   <span className="text-gray-700">
-                    Întrebări? <strong>info@jinfotours.ro</strong>
+                    Întrebări? <strong>office@jinfotours.ro</strong>
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
