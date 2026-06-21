@@ -29,7 +29,7 @@ const CURATED: Circuit[] = [
   { id: 'c4', slug: 'columbiapanama', name: 'Columbia & Panama', continent: 'America de Sud', main_image: '/hero/columbiapanama.webp' },
   { id: 'c5', slug: 'croaziera-pe-nil', name: 'Croazieră pe Nil', continent: 'Africa', main_image: '/hero/croaziera-pe-nil.webp' },
   { id: 'c6', slug: 'cubamexic', name: 'Cuba & Mexic', continent: 'America de Nord', main_image: '/hero/cubamexic.webp' },
-  { id: 'c7', slug: 'incursiuneinparis', name: 'Incursiune în Paris', continent: 'Europa', main_image: '/hero/incursiuneinparis.webp' },
+  { id: 'c7', slug: 'incursiuneinparis', name: 'Incursiune în Paris si DisneyLLand', continent: 'Europa', main_image: '/hero/incursiuneinparis.webp' },
   { id: 'c8', slug: 'lisabonamadeira', name: 'Lisabona & Madeira', continent: 'Europa', main_image: '/hero/lisabonamadeira.webp' },
   { id: 'c9', slug: 'thailandasingaporemalayesia', name: 'Thailanda - Singapore - Malaezia', continent: 'Asia', main_image: '/hero/thailandasingaporemalayesia.webp' },
   { id: 'c10', slug: 'vivaspania', name: 'Viva Spania', continent: 'Europa', main_image: '/hero/vivaspania.webp' },
