@@ -83,7 +83,7 @@ export default function Header({ role = null }: HeaderProps) {
         {/* Top bar */}
         <div className="flex items-center justify-between py-3">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
+          <Link href="/circuits" className="flex items-center gap-2 sm:gap-3 group">
             <div className="relative w-32 h-10 sm:w-40 sm:h-12 transition-transform group-hover:scale-105">
               <Image
                 src="/logo-jinfotours.svg"

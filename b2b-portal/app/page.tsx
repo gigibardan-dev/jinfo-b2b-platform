@@ -25,11 +25,11 @@ interface Circuit {
 const CURATED: Circuit[] = [
   { id: 'c1', slug: 'circuit-coastadeazur', name: 'Coasta de Azur', continent: 'Europa', main_image: '/hero/circuit-coastadeazur.webp' },
   { id: 'c2', slug: 'circuit-etiopia', name: 'Etiopia', continent: 'Africa', main_image: '/hero/circuit-etiopia.webp' },
-  { id: 'c3', slug: 'circuit-puglia', name: 'Puglia- Micul secret al Italiei', continent: 'Europa', main_image: '/hero/circuit-puglia.webp' },
+  { id: 'c3', slug: 'circuit-puglia', name: 'Puglia', continent: 'Europa', main_image: '/hero/circuit-puglia.webp' },
   { id: 'c4', slug: 'columbiapanama', name: 'Columbia & Panama', continent: 'America de Sud', main_image: '/hero/columbiapanama.webp' },
   { id: 'c5', slug: 'croaziera-pe-nil', name: 'Croazieră pe Nil', continent: 'Africa', main_image: '/hero/croaziera-pe-nil.webp' },
   { id: 'c6', slug: 'cubamexic', name: 'Cuba & Mexic', continent: 'America de Nord', main_image: '/hero/cubamexic.webp' },
-  { id: 'c7', slug: 'incursiuneinparis', name: 'Incursiune în Paris si DisneyLLand', continent: 'Europa', main_image: '/hero/incursiuneinparis.webp' },
+  { id: 'c7', slug: 'incursiuneinparis', name: 'Incursiune în Paris', continent: 'Europa', main_image: '/hero/incursiuneinparis.webp' },
   { id: 'c8', slug: 'lisabonamadeira', name: 'Lisabona & Madeira', continent: 'Europa', main_image: '/hero/lisabonamadeira.webp' },
   { id: 'c9', slug: 'thailandasingaporemalayesia', name: 'Thailanda - Singapore - Malaezia', continent: 'Asia', main_image: '/hero/thailandasingaporemalayesia.webp' },
   { id: 'c10', slug: 'vivaspania', name: 'Viva Spania', continent: 'Europa', main_image: '/hero/vivaspania.webp' },
@@ -352,7 +352,7 @@ export default function LandingPage() {
 
         <div className="jt-wrap" style={{ position: 'relative', zIndex: 5, display: 'flex', flexDirection: 'column', minHeight: '100svh' }}>
           <nav className="jt-nav">
-            <Link href="/" className="jt-logo-chip" aria-label="J'Info Tours">
+            <Link href="/circuits" className="jt-logo-chip" aria-label="J'Info Tours">
               <span className="jt-logo">
                 <Image src="/logo-jinfotours.svg" alt="J'Info Tours" fill className="object-contain" priority />
               </span>
