@@ -71,24 +71,37 @@ async function initBrowser() {
     }
 }
 
-// 2. Extractor Prețuri cu logica de Retry - ÎMBUNĂTĂȚIT pentru CI
+// 2. Extractor Prețuri cu logica de Retry - strategie progresivă
+//
+//    Tentativa 1: waitUntil: 'networkidle'  → cea mai sigură, dar poate da timeout
+//                                              pe pagini cu resurse externe grele
+//    Tentativa 2: waitUntil: 'domcontentloaded' → mult mai rapid, DOM-ul e gata
+//                                                  chiar dacă resursele externe nu s-au încărcat
+//    Tentativa 3: waitUntil: 'domcontentloaded' → la fel, dar fără niciun extra wait
+//                                                  după click pe tab (last resort)
+//
+//    Astfel, circuite care dau timeout pe networkidle sunt recuperate automat
+//    fără a fi nevoie de scripturi de patch separate.
 async function extractAllPrices(url, retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await initBrowser();
             console.log(`      💰 Extrag prețuri (tentativa ${attempt}/${retries})...`);
-            
-            // Timeout mai mare pe CI
+
+            // Strategie progresivă de încărcare:
+            // - Tentativa 1: networkidle (așteptăm toate resursele - cel mai fiabil pentru prețuri dinamice)
+            // - Tentativa 2+: domcontentloaded (așteptăm doar DOM-ul - rezolvă timeout-urile pe pagini grele)
+            const waitUntil = attempt === 1 ? 'networkidle' : 'domcontentloaded';
             const gotoTimeout = IS_CI ? 180000 : 120000;
-            await page.goto(url, { waitUntil: 'networkidle', timeout: gotoTimeout });
+
+            await page.goto(url, { waitUntil, timeout: gotoTimeout });
 
             // Verificăm și dăm click pe tab-ul de oferte
             const hasOfferTab = await page.evaluate(() => !!document.querySelector('a[href="#offer"]'));
             if (hasOfferTab) {
                 await page.click('a[href="#offer"]');
                 
-                // FIX: waitForSelector în loc de waitForTimeout fix
-                // Așteptăm până când tabelul de prețuri devine vizibil
+                // Așteptăm să apară tabelul de prețuri după click
                 try {
                     await page.waitForSelector('.service-cell-row', { 
                         state: 'visible', 
@@ -96,15 +109,23 @@ async function extractAllPrices(url, retries = 3) {
                     });
                 } catch (e) {
                     console.log(`      ⚠️ Tabelul de prețuri nu a apărut, încerc oricum...`);
-                    // Așteptăm puțin ca fallback
-                    await page.waitForTimeout(IS_CI ? 5000 : 2000);
+                    // Pe tentativa 3 (last resort) nu mai așteptăm deloc
+                    if (attempt < 3) {
+                        await page.waitForTimeout(IS_CI ? 5000 : 2000);
+                    }
                 }
             } else {
-                // Fără tab de oferte, așteptăm puțin pentru siguranță
-                await page.waitForTimeout(IS_CI ? 3000 : 1000);
+                // Fără tab de oferte:
+                // - Pe networkidle (tentativa 1) așteptăm puțin - pagina e deja încărcată
+                // - Pe domcontentloaded (tentativa 2+) așteptăm mai mult - JS-ul poate
+                //   să nu fi terminat de randat prețurile dinamice
+                const extraWait = attempt === 1
+                    ? (IS_CI ? 3000 : 1000)
+                    : (IS_CI ? 8000 : 3000);
+                await page.waitForTimeout(extraWait);
             }
 
-            return await page.evaluate(() => {
+            const result = await page.evaluate(() => {
                 const rows = document.querySelectorAll('.service-cell-row');
                 const result = {
                     double: null,
@@ -169,6 +190,14 @@ async function extractAllPrices(url, retries = 3) {
                 });
                 return result;
             });
+
+            // Logăm dacă am recuperat prețuri cu fallback-ul domcontentloaded
+            if (attempt > 1 && result.allOptions.length > 0) {
+                console.log(`      ℹ️ Prețuri obținute cu domcontentloaded (tentativa ${attempt})`);
+            }
+
+            return result;
+
         } catch (error) {
             console.error(`      ⚠️ Tentativa ${attempt} eșuată pt prețuri: ${error.message}`);
             if (attempt === retries) {
@@ -403,7 +432,7 @@ async function processCircuit(id, name, continentName) {
 // 4. Funcția Principală
 async function main() {
     const startTime = Date.now();
-    console.log('🚀 JINFO SCRAPER V2.3 - CI OPTIMIZED\n');
+    console.log('🚀 JINFO SCRAPER V2.4 - PROGRESSIVE WAITUNTIL\n');
     console.log(`⚙️  Mod: ${IS_CI ? 'GitHub Actions (CI)' : 'Local'}\n`);
     console.log('⏱️  Estimat: 60-90 minute\n');
 
@@ -413,7 +442,6 @@ async function main() {
         console.log('='.repeat(60));
         
         try {
-            // FIX: User-Agent și pe request-ul AJAX de circuite
             const res = await axiosInstance.get(
                 `https://www.jinfotours.ro/holidays/get_destination_by_continent_ajax/${contId}`
             );
@@ -424,7 +452,7 @@ async function main() {
 
             for (const id of ids) {
                 await processCircuit(id, circuits[id], contName);
-                // Pauză între circuite - mai mică decât înainte
+                // Pauză între circuite
                 await new Promise(r => setTimeout(r, IS_CI ? 3000 : 5000));
             }
         } catch (err) {
@@ -445,7 +473,7 @@ async function main() {
         meta: {
             scrapedAt: new Date().toISOString(),
             totalCircuits: finalData.length,
-            version: '2.3-ci-optimized',
+            version: '2.4-progressive-waituntil',
             hasAllPrices: true,
             duration: `${(duration / 60).toFixed(1)} minute`,
             stats: stats
