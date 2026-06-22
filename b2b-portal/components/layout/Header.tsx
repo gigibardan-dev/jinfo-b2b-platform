@@ -49,13 +49,14 @@ export default function Header({ role = null }: HeaderProps) {
     mobileLabel?: string;
   };
 
-  // Admin navigation links
+ // Admin navigation links
   const adminLinks: NavLink[] = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/admin/bookings', label: 'Rezervări', icon: '📋' },
     { href: '/admin/payments', label: 'Plăți', icon: '💰' },
     { href: '/admin/agencies', label: 'Agenții', icon: '🏢' },
     { href: '/admin/create-agency', label: 'Creare Agenție', icon: '➕', mobileLabel: 'Creare' },
+    { href: '/admin/discounts', label: 'Reduceri', icon: '🏷️', mobileLabel: 'Reduceri' },
     { href: '/admin/scraping', label: 'Actualizare Circuite', icon: '🔄', mobileLabel: 'Actualizare' },
     { href: '/admin/profile', label: 'Profilul Meu', icon: '👤', mobileLabel: 'Profil' },
     // Doar superadmin

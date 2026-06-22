@@ -5,11 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { Circuit } from '@/lib/types/database';
+import { applyDiscount, getAgencyCommission } from '@/lib/types/database';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-
-export default function HomePage() {
+export default function CircuitsPage() {
   const [circuits, setCircuits] = useState<Circuit[]>([]);
   const [loading, setLoading] = useState(true);
   const [agencyCommission, setAgencyCommission] = useState(8);
@@ -77,13 +77,10 @@ export default function HomePage() {
   const stats = useMemo(() => {
     const continents = new Set(circuits.map(c => c.continent));
     const totalDepartures = circuits.reduce((sum, c) => sum + (c.departures?.length || 0), 0);
-    const avgPrice = circuits.reduce((sum, c) => sum + (c.price_double || 0), 0) / circuits.length;
-
     return {
       totalCircuits: circuits.length,
       continents: continents.size,
       departures: totalDepartures,
-      avgPrice: Math.round(avgPrice)
     };
   }, [circuits]);
 
@@ -106,10 +103,12 @@ export default function HomePage() {
       );
     }
 
-    // Price Range
+    // Price Range — filtrăm după prețul efectiv (redus dacă e cazul)
     filtered = filtered.filter(c => {
-      const price = c.price_double || 0;
-      return price >= priceRange[0] && price <= priceRange[1];
+      const effectivePrice = c.is_discounted
+        ? (applyDiscount(c.price_double, c.discount_percentage) ?? 0)
+        : (c.price_double ?? 0);
+      return effectivePrice >= priceRange[0] && effectivePrice <= priceRange[1];
     });
 
     // Nights
@@ -123,11 +122,19 @@ export default function HomePage() {
       });
     }
 
-    // Sort
+    // Sort — sortăm după prețul efectiv
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'price-asc') return (a.price_double || 0) - (b.price_double || 0);
-      if (sortBy === 'price-desc') return (b.price_double || 0) - (a.price_double || 0);
+      if (sortBy === 'price-asc') {
+        const pa = a.is_discounted ? (applyDiscount(a.price_double, a.discount_percentage) ?? 0) : (a.price_double ?? 0);
+        const pb = b.is_discounted ? (applyDiscount(b.price_double, b.discount_percentage) ?? 0) : (b.price_double ?? 0);
+        return pa - pb;
+      }
+      if (sortBy === 'price-desc') {
+        const pa = a.is_discounted ? (applyDiscount(a.price_double, a.discount_percentage) ?? 0) : (a.price_double ?? 0);
+        const pb = b.is_discounted ? (applyDiscount(b.price_double, b.discount_percentage) ?? 0) : (b.price_double ?? 0);
+        return pb - pa;
+      }
       if (sortBy === 'popular') return (b.departures?.length || 0) - (a.departures?.length || 0);
       return 0;
     });
@@ -155,8 +162,6 @@ export default function HomePage() {
     );
   }
 
-  // const agencyCommission = 8; <- ȘTERS, vine din state
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50">
       <Header />
@@ -165,7 +170,6 @@ export default function HomePage() {
       <div className="bg-gradient-to-r from-blue-600 to-orange-500 text-white py-8">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl font-bold mb-6">Portal B2B - Circuite Turistice</h1>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-3xl font-bold">{stats.totalCircuits}</div>
@@ -190,7 +194,6 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Search & Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          {/* Search Bar */}
           <div className="relative mb-6">
             <input
               type="text"
@@ -209,13 +212,9 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Filters Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            {/* Continent Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🌍 Continent
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">🌍 Continent</label>
               <select
                 value={selectedContinent}
                 onChange={(e) => setSelectedContinent(e.target.value)}
@@ -230,11 +229,8 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                💰 Preț (EUR)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">💰 Preț (EUR)</label>
               <div className="space-y-2">
                 <input
                   type="range"
@@ -245,17 +241,12 @@ export default function HomePage() {
                   onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                   className="w-full"
                 />
-                <div className="text-sm text-gray-600 text-center">
-                  0 - {priceRange[1]} EUR
-                </div>
+                <div className="text-sm text-gray-600 text-center">0 - {priceRange[1]} EUR</div>
               </div>
             </div>
 
-            {/* Nights Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🌙 Nopți
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">🌙 Nopți</label>
               <select
                 value={nightsFilter}
                 onChange={(e) => setNightsFilter(e.target.value)}
@@ -268,11 +259,8 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📊 Sortare
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">📊 Sortare</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -286,12 +274,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Filter Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
               <span className="font-semibold text-gray-900">{filteredCircuits.length}</span> circuite găsite
             </div>
-
             <div className="flex items-center gap-3">
               <button
                 onClick={resetFilters}
@@ -299,7 +285,6 @@ export default function HomePage() {
               >
                 🔄 Resetează filtre
               </button>
-
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
@@ -332,14 +317,22 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+          <div className={viewMode === 'grid'
+            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+            : 'space-y-4'
+          }>
             {filteredCircuits.map((circuit) => {
-              const basePrice = circuit.price_double || 0;
-              const agencyPrice = Math.round(basePrice - (basePrice * agencyCommission / 100));
-              const savings = Math.round(basePrice - agencyPrice);
-              const nightsCount = circuit.nights?.match(/\d+/)?.[0] || 'N/A';
-              const priceOptionsCount = Array.isArray(circuit.price_options) ? circuit.price_options.length : 0;
+              // ── Calcul prețuri cu suport reduceri ──────────────────────────
+              const originalPrice  = circuit.price_double ?? 0
+              const effectivePrice = circuit.is_discounted
+                ? (applyDiscount(circuit.price_double, circuit.discount_percentage) ?? 0)
+                : originalPrice
+              const commission     = getAgencyCommission(effectivePrice, agencyCommission) ?? 0
+              const agencyPrice    = Math.round(effectivePrice - commission)
+              const nightsCount    = circuit.nights?.match(/\d+/)?.[0] || 'N/A'
+              const priceOptionsCount = Array.isArray(circuit.price_options) ? circuit.price_options.length : 0
 
+              // ── VIEW LIST ───────────────────────────────────────────────────
               if (viewMode === 'list') {
                 return (
                   <Link
@@ -357,9 +350,18 @@ export default function HomePage() {
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                         )}
-                        <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                          {circuit.continent}
-                        </div>
+                        {/* Badge reducere */}
+                        {circuit.is_discounted && circuit.discount_percentage && (
+                          <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            🏷️ -{Math.round(circuit.discount_percentage)}%
+                          </div>
+                        )}
+                        {/* Badge continent (jos dacă nu e reducere, sus dacă e) */}
+                        {!circuit.is_discounted && (
+                          <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            {circuit.continent}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-1 p-6 flex flex-col justify-between">
@@ -367,7 +369,6 @@ export default function HomePage() {
                           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors">
                             {circuit.name}
                           </h3>
-
                           <div className="flex flex-wrap gap-3 mb-4">
                             <span className="inline-flex items-center gap-1 text-sm text-gray-600">
                               🌙 {nightsCount} nopți
@@ -382,18 +383,25 @@ export default function HomePage() {
                         </div>
 
                         <div className="flex items-end justify-between">
-                          <div>
+                          <div className="space-y-1">
+                            {/* Preț listă — tăiat dacă e reducere */}
                             <div className="text-sm text-gray-500 line-through">
-                              Preț public: {Math.round(basePrice)} EUR
+                              Preț listă: {originalPrice.toLocaleString('ro-RO')} EUR
                             </div>
+                            {/* Preț redus — doar dacă e reducere */}
+                            {circuit.is_discounted && (
+                              <div className="text-sm font-semibold text-orange-600">
+                                Preț redus: {effectivePrice.toLocaleString('ro-RO')} EUR
+                              </div>
+                            )}
+                            {/* Prețul agenției */}
                             <div className="text-3xl font-bold text-orange-500">
-                              {agencyPrice} EUR
+                              {agencyPrice.toLocaleString('ro-RO')} EUR
                             </div>
                             <div className="text-sm text-green-600 font-medium">
-                              Economie: {savings} EUR ({agencyCommission}%)
+                              Comisionul tău: {commission.toLocaleString('ro-RO')} EUR ({agencyCommission}%)
                             </div>
                           </div>
-
                           <button className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
                             Vezi detalii →
                           </button>
@@ -404,6 +412,7 @@ export default function HomePage() {
                 );
               }
 
+              // ── VIEW GRID ───────────────────────────────────────────────────
               return (
                 <Link
                   key={circuit.id}
@@ -419,12 +428,23 @@ export default function HomePage() {
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                    <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                      {circuit.continent}
-                    </div>
+                    {/* Badge reducere — sus stânga, cel mai prominent */}
+                    {circuit.is_discounted && circuit.discount_percentage && (
+                      <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                        🏷️ -{circuit.discount_percentage}%
+                      </div>
+                    )}
 
+                    {/* Badge continent — sus stânga dacă nu e reducere */}
+                    {!circuit.is_discounted && (
+                      <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                        {circuit.continent}
+                      </div>
+                    )}
+
+                    {/* Badge nopți — sus dreapta */}
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-900 shadow-lg">
                       🌙 {nightsCount} nopți
                     </div>
@@ -446,24 +466,37 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-500">Preț public:</span>
-                        <span className="text-sm text-gray-500 line-through">
-                          {Math.round(basePrice)} EUR
+                    <div className="border-t border-gray-200 pt-4 space-y-2">
+                      {/* Preț listă */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">Preț listă:</span>
+                        <span className={`text-sm ${circuit.is_discounted ? 'text-gray-400 line-through' : 'text-gray-600'}`}>
+                          {originalPrice.toLocaleString('ro-RO')} EUR
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-lg font-semibold text-gray-900">Preț agenție:</span>
+                      {/* Preț redus — doar dacă e reducere */}
+                      {circuit.is_discounted && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-orange-600">Preț redus:</span>
+                          <span className="text-sm font-bold text-orange-600">
+                            {effectivePrice.toLocaleString('ro-RO')} EUR
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Prețul agenției */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-semibold text-gray-900">Prețul tău:</span>
                         <span className="text-2xl font-bold text-orange-500">
-                          {agencyPrice} EUR
+                          {agencyPrice.toLocaleString('ro-RO')} EUR
                         </span>
                       </div>
 
+                      {/* Comision */}
                       <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                         <span className="text-sm text-green-700 font-medium">
-                          💚 Comision {savings} EUR ({agencyCommission}%)
+                          💚 Comisionul tău: {commission.toLocaleString('ro-RO')} EUR ({agencyCommission}%)
                         </span>
                       </div>
                     </div>

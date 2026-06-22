@@ -472,7 +472,7 @@ export default function RegisterPage() {
           {/* Back to Home */}
           <div className="mt-6 text-center">
             <Link 
-              href="/" 
+              href="/circuits" 
               className="text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-2"
             >
               <span>←</span>
