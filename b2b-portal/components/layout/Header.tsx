@@ -49,7 +49,7 @@ export default function Header({ role = null }: HeaderProps) {
     mobileLabel?: string;
   };
 
- // Admin navigation links
+  // Admin navigation links
   const adminLinks: NavLink[] = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/admin/bookings', label: 'Rezervări', icon: '📋' },
@@ -101,6 +101,15 @@ export default function Header({ role = null }: HeaderProps) {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            {pathname !== '/circuits' && (
+              <Link
+                href="/circuits"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-orange-500 transition-colors font-medium rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-lg">🌍</span>
+                <span>Toate circuitele</span>
+              </Link>
+            )}
             <a
               href="mailto:office@jinfotours.ro"
               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-orange-500 transition-colors font-medium rounded-lg hover:bg-gray-50"
