@@ -110,6 +110,17 @@ export default function Header({ role = null }: HeaderProps) {
                 <span>Toate circuitele</span>
               </Link>
             )}
+            <Link
+              href="/calendar"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pathname === '/calendar'
+                ? 'text-orange-500 bg-orange-50'
+                : 'text-gray-600 hover:text-orange-500 hover:bg-gray-50'
+                }`}
+            >
+              <span className="text-lg">📅</span>
+              <span>Calendar Plecări</span>
+            </Link>
+
             <a
               href="mailto:office@jinfotours.ro"
               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-orange-500 transition-colors font-medium rounded-lg hover:bg-gray-50"
@@ -224,6 +235,17 @@ export default function Header({ role = null }: HeaderProps) {
 
             {/* Mobile Actions */}
             <div className="space-y-2 pt-2">
+              <Link
+                href="/calendar"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${pathname === '/calendar'
+                    ? 'bg-orange-500 text-white'
+                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                  }`}
+              >
+                <span className="text-xl">📅</span>
+                <span>Calendar Plecări</span>
+              </Link>
               <a
                 href="mailto:office@jinfotours.ro"
                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 font-semibold rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"

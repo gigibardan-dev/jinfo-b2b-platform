@@ -8,6 +8,9 @@ import type { Circuit } from '@/lib/types/database';
 import { applyDiscount, getAgencyCommission } from '@/lib/types/database';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { DayPicker } from 'react-day-picker';
+import { ro } from 'date-fns/locale';
+import 'react-day-picker/dist/style.css';
 
 export default function CircuitsPage() {
   const [circuits, setCircuits] = useState<Circuit[]>([]);
@@ -21,6 +24,10 @@ export default function CircuitsPage() {
   const [nightsFilter, setNightsFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // Date filters
+  const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [showRangePicker, setShowRangePicker] = useState(false);
 
   // Load circuits from Supabase
   useEffect(() => {
@@ -122,6 +129,30 @@ export default function CircuitsPage() {
       });
     }
 
+    // Month filter
+    if (monthFilter !== 'all') {
+      filtered = filtered.filter(c => {
+        return c.departures?.some((dep: any) => {
+          const d = new Date(dep.departure_date + 'T12:00:00');
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          return key === monthFilter;
+        });
+      });
+    }
+
+    // Date range filter
+    if (dateRange.from) {
+      filtered = filtered.filter(c => {
+        return c.departures?.some((dep: any) => {
+          const depDate = new Date(dep.departure_date + 'T12:00:00');
+          if (dateRange.to) {
+            return depDate >= dateRange.from! && depDate <= dateRange.to;
+          }
+          return depDate >= dateRange.from!;
+        });
+      });
+    }
+
     // Sort — sortăm după prețul efectiv
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -140,7 +171,7 @@ export default function CircuitsPage() {
     });
 
     return filtered;
-  }, [circuits, searchQuery, selectedContinent, priceRange, nightsFilter, sortBy]);
+  }, [circuits, searchQuery, selectedContinent, priceRange, nightsFilter, sortBy, monthFilter, dateRange]);
 
   // Reset Filters
   const resetFilters = () => {
@@ -149,8 +180,38 @@ export default function CircuitsPage() {
     setPriceRange([0, 10000]);
     setNightsFilter('all');
     setSortBy('name');
+    setMonthFilter('all');
+    setDateRange({ from: undefined, to: undefined });
+    setShowRangePicker(false);
+  };
+  // Generează lunile disponibile din departures
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    circuits.forEach(c => {
+      c.departures?.forEach((dep: any) => {
+        const d = new Date(dep.departure_date + 'T12:00:00');
+        if (d >= new Date()) {
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthSet.add(key);
+        }
+      });
+    });
+    return Array.from(monthSet).sort();
+  }, [circuits]);
+
+  const formatMonthLabel = (key: string) => {
+    const [year, month] = key.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, 1)
+      .toLocaleDateString('ro-RO', { month: 'long', year: 'numeric' });
   };
 
+  const formatRangeLabel = () => {
+    if (!dateRange.from) return '📅 Interval date';
+    const from = dateRange.from.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' });
+    if (!dateRange.to) return `📅 De la ${from}`;
+    const to = dateRange.to.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `📅 ${from} → ${to}`;
+  };
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50">
@@ -273,6 +334,119 @@ export default function CircuitsPage() {
               </select>
             </div>
           </div>
+          {/* Date Filters Row */}
+          <div className="border-t border-gray-100 pt-4 mt-2">
+            <div className="flex flex-wrap items-end gap-3">
+
+              {/* Selector Luna */}
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">📅 Luna plecării</label>
+                <select
+                  value={monthFilter}
+                  onChange={(e) => {
+                    setMonthFilter(e.target.value);
+                    setDateRange({ from: undefined, to: undefined });
+                    setShowRangePicker(false);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none text-gray-900 font-medium bg-white"
+                >
+                  <option value="all">Toate lunile</option>
+                  {availableMonths.map(key => (
+                    <option key={key} value={key}>{formatMonthLabel(key)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Range Picker */}
+              <div className="flex-1 min-w-[200px] relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">🗓️ Interval specific</label>
+                <button
+                  onClick={() => {
+                    setShowRangePicker(!showRangePicker);
+                    setMonthFilter('all');
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg text-left font-medium transition-all ${dateRange.from
+                      ? 'border-orange-400 bg-orange-50 text-orange-700'
+                      : 'border-gray-300 text-gray-600 hover:border-orange-400'
+                    }`}
+                >
+                  {formatRangeLabel()}
+                </button>
+
+                {showRangePicker && (
+                  <div className="absolute top-full left-0 z-50 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
+                    <style>{`
+            .range-picker .rdp {
+              --rdp-accent-color: #f97316;
+              --rdp-background-color: #fff7ed;
+              margin: 0;
+            }
+            .range-picker .rdp-day_selected,
+            .range-picker .rdp-day_range_start,
+            .range-picker .rdp-day_range_end {
+              background-color: #f97316 !important;
+              color: white !important;
+            }
+            .range-picker .rdp-day_range_middle {
+              background-color: #fff7ed !important;
+              color: #c2410c !important;
+            }
+          `}</style>
+                    <div className="range-picker">
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={(range) => {
+                          setDateRange({ from: range?.from, to: range?.to });
+                        }}
+                        locale={ro}
+                        startMonth={new Date()}
+                        numberOfMonths={2}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
+                      <button
+                        onClick={() => {
+                          setDateRange({ from: undefined, to: undefined });
+                          setShowRangePicker(false);
+                        }}
+                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        ✕ Resetează
+                      </button>
+                      <button
+                        onClick={() => setShowRangePicker(false)}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors"
+                      >
+                        ✓ Aplică
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Badge filtru activ */}
+              {(monthFilter !== 'all' || dateRange.from) && (
+                <div className="flex items-end pb-0.5">
+                  <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                    <span className="text-sm text-orange-700 font-medium">
+                      {monthFilter !== 'all' ? `Luna: ${formatMonthLabel(monthFilter)}` : formatRangeLabel()}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setMonthFilter('all');
+                        setDateRange({ from: undefined, to: undefined });
+                        setShowRangePicker(false);
+                      }}
+                      className="text-orange-400 hover:text-orange-600 text-lg leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
@@ -323,13 +497,13 @@ export default function CircuitsPage() {
           }>
             {filteredCircuits.map((circuit) => {
               // ── Calcul prețuri cu suport reduceri ──────────────────────────
-              const originalPrice  = circuit.price_double ?? 0
+              const originalPrice = circuit.price_double ?? 0
               const effectivePrice = circuit.is_discounted
                 ? (applyDiscount(circuit.price_double, circuit.discount_percentage) ?? 0)
                 : originalPrice
-              const commission     = getAgencyCommission(effectivePrice, agencyCommission) ?? 0
-              const agencyPrice    = Math.round(effectivePrice - commission)
-              const nightsCount    = circuit.nights?.match(/\d+/)?.[0] || 'N/A'
+              const commission = getAgencyCommission(effectivePrice, agencyCommission) ?? 0
+              const agencyPrice = Math.round(effectivePrice - commission)
+              const nightsCount = circuit.nights?.match(/\d+/)?.[0] || 'N/A'
               const priceOptionsCount = Array.isArray(circuit.price_options) ? circuit.price_options.length : 0
 
               // ── VIEW LIST ───────────────────────────────────────────────────
