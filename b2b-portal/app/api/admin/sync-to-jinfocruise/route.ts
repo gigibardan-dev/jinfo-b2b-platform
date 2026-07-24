@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, company_name, contact_person, phone, commission_pct } = body;
+    const { email, company_name, contact_person, phone, commission_pct, password } = body;
 
     if (!email || !company_name) {
       return NextResponse.json({ error: 'email și company_name sunt obligatorii' }, { status: 400 });
