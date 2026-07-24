@@ -12,25 +12,38 @@ async function getAgencyStats(userId: string) {
     .eq('user_id', userId)
     .single();
 
-  if (!agency) {
-    return { agencyData: null, stats: null };
-  }
+  if (!agency) return { agencyData: null, stats: null };
 
+  // Circuite
   const { data: bookings } = await supabase
     .from('pre_bookings')
     .select('id, status, num_adults, num_children')
     .eq('agency_id', agency.id);
 
+  // Croaziere
+  const { data: cruises } = await supabase
+    .from('cruise_bookings')
+    .select('id, status, num_adults, num_children, gross_amount')
+    .eq('agency_id', agency.id);
+
   const activeBookings = bookings?.filter(b => b.status === 'pending' || b.status === 'approved').length || 0;
   const confirmedBookings = bookings?.filter(b => b.status === 'approved').length || 0;
-  const totalClients = bookings?.reduce((sum, b) => sum + (b.num_adults || 0) + (b.num_children || 0), 0) || 0;
+  const totalClients = bookings?.reduce((s, b) => s + (b.num_adults || 0) + (b.num_children || 0), 0) || 0;
+
+  const activeCruises = cruises?.filter(c => c.status === 'pending' || c.status === 'approved').length || 0;
+  const confirmedCruises = cruises?.filter(c => c.status === 'approved').length || 0;
+  const totalCruiseValue = cruises?.reduce((s, c) => s + Number(c.gross_amount || 0), 0) || 0;
 
   return {
     agencyData: agency,
     stats: {
       activeBookings,
       confirmedBookings,
-      totalClients
+      totalClients,
+      activeCruises,
+      confirmedCruises,
+      totalCruiseValue,
+      totalCruises: cruises?.length || 0,
     }
   };
 }
@@ -92,7 +105,7 @@ export default async function AgencyDashboardPage() {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">📊</span>
-          <h2 className="text-xl font-bold text-gray-900">Statisticile Mele</h2>
+          <h2 className="text-xl font-bold text-gray-900">Statistici Circuite</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Active Bookings */}
@@ -147,7 +160,53 @@ export default async function AgencyDashboardPage() {
           </div>
         </div>
       </div>
-
+      {/* Cruise Stats */}
+      {stats.totalCruises > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🚢</span>
+            <h2 className="text-xl font-bold text-gray-900">Statistici Croaziere</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white rounded-2xl shadow-md border-2 border-cyan-200">
+              <div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">🚢</div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.activeCruises}</div>
+                    <div className="text-xs font-semibold text-cyan-600 uppercase tracking-wide">Active</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Rezervări Croaziere Active</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-md border-2 border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">✅</div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.confirmedCruises}</div>
+                    <div className="text-xs font-semibold text-green-600 uppercase tracking-wide">Confirmate</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Croaziere Confirmate</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-md border-2 border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-md">💰</div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">{stats.totalCruiseValue.toFixed(0)} €</div>
+                    <div className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Valoare</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-gray-700">Valoare Totală Croaziere</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Quick Actions */}
       <div>
         <div className="flex items-center gap-2 mb-4">
@@ -155,7 +214,7 @@ export default async function AgencyDashboardPage() {
           <h2 className="text-xl font-bold text-gray-900">Acțiuni Rapide</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link 
+          <Link
             href="/agency/bookings"
             className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-2 border-gray-100 hover:border-blue-300"
           >
@@ -212,7 +271,7 @@ export default async function AgencyDashboardPage() {
             </div>
           </Link>
 
-          <Link 
+          <Link
             href="/agency/profile"
             className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-2 border-gray-100 hover:border-purple-300"
           >
@@ -260,21 +319,24 @@ export default async function AgencyDashboardPage() {
       </div>
 
       {/* Getting Started Guide */}
-      {stats.activeBookings === 0 && (
+      {stats.activeBookings === 0 && (stats.activeCruises || 0) === 0 && (
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-md border-2 border-green-200 p-8">
           <div className="text-center max-w-2xl mx-auto">
             <div className="text-6xl mb-4">🚀</div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Începe Prima Ta Rezervare</h3>
             <p className="text-gray-600 mb-6">
-              Explorează circuitele disponibile și creează prima ta pre-rezervare pentru a începe colaborarea cu J'Info Tours
+              Explorează circuitele și croazierele disponibile și creează prima ta rezervare
             </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-semibold shadow-lg hover:shadow-xl"
-            >
-              <span>🗺️</span>
-              <span>Vezi Circuitele</span>
-            </Link>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <Link href="/"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-semibold shadow-lg">
+                <span>🗺️</span><span>Vezi Circuitele</span>
+              </Link>
+              <a href="https://jinfocruise.ro/croaziere/search" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all font-semibold shadow-lg">
+                <span>🚢</span><span>Vezi Croazierele</span>
+              </a>
+            </div>
           </div>
         </div>
       )}

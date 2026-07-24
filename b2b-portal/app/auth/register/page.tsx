@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

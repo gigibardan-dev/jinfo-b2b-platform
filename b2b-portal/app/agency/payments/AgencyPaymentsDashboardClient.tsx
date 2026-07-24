@@ -219,21 +219,19 @@ export default function AgencyPaymentsDashboardClient({ bookings, payments, stat
         <div className="flex items-center gap-2 bg-white rounded-xl shadow-md border border-gray-200 p-2">
           <button
             onClick={() => setActiveTab('payments')}
-            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'payments'
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'payments'
+              ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+              }`}
           >
             💳 Istoric Plăți ({payments.length})
           </button>
           <button
             onClick={() => setActiveTab('bookings')}
-            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'bookings'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'bookings'
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+              }`}
           >
             📋 Status Rezervări ({bookings.length})
           </button>
@@ -309,7 +307,9 @@ export default function AgencyPaymentsDashboardClient({ bookings, payments, stat
                         </td>
                         <td className="px-6 py-4">
                           <Link
-                            href={`/agency/bookings/${payment.pre_booking_id}`}
+                            href={payment.isCruise
+                              ? `/agency/bookings/cruise/${payment.pre_booking_id}`
+                              : `/agency/bookings/${payment.pre_booking_id}`}
                             className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all font-semibold text-sm"
                           >
                             Vezi Rezervare
@@ -404,7 +404,9 @@ export default function AgencyPaymentsDashboardClient({ bookings, payments, stat
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap">
                             <Link
-                              href={`/agency/bookings/${booking.id}`}
+                              href={booking.isCruise
+                                ? `/agency/bookings/cruise/${booking.id}`
+                                : `/agency/bookings/${booking.id}`}
                               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold text-sm"
                             >
                               Vezi Detalii

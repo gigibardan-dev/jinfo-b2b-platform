@@ -57,18 +57,18 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
 
   const handleAddPayment = async (data: any) => {
     try {
-      const res = await fetch('/api/payments', {
+      const res = await fetch('/api/cruise-payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          booking_id: booking.id,
+          cruise_booking_id: booking.id,
           currency: 'EUR'
         })
       });
 
       if (!res.ok) throw new Error('Failed to add payment');
-      
+
       await loadData();
       setShowPaymentModal(false);
     } catch (error) {
@@ -86,7 +86,7 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
       });
 
       if (!res.ok) throw new Error('Failed to delete payment');
-      
+
       await loadData();
     } catch (error) {
       console.error('Error deleting payment:', error);
@@ -108,7 +108,7 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
       });
 
       if (!res.ok) throw new Error('Failed to upload document');
-      
+
       await loadData();
       setShowDocumentModal(false);
     } catch (error) {
@@ -126,7 +126,7 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
       });
 
       if (!res.ok) throw new Error('Failed to delete document');
-      
+
       await loadData();
     } catch (error) {
       console.error('Error deleting document:', error);
@@ -156,32 +156,32 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { gradient: string; badge: string; text: string; icon: string }> = {
-      pending: { 
-        gradient: 'from-yellow-50 to-amber-50', 
+      pending: {
+        gradient: 'from-yellow-50 to-amber-50',
         badge: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-        text: 'În așteptare', 
-        icon: '⏳' 
+        text: 'În așteptare',
+        icon: '⏳'
       },
-      approved: { 
-        gradient: 'from-green-50 to-emerald-50', 
+      approved: {
+        gradient: 'from-green-50 to-emerald-50',
         badge: 'bg-green-100 text-green-800 border-green-300',
-        text: 'Aprobat', 
-        icon: '✅' 
+        text: 'Aprobat',
+        icon: '✅'
       },
-      rejected: { 
-        gradient: 'from-red-50 to-rose-50', 
+      rejected: {
+        gradient: 'from-red-50 to-rose-50',
         badge: 'bg-red-100 text-red-800 border-red-300',
-        text: 'Respins', 
-        icon: '❌' 
+        text: 'Respins',
+        icon: '❌'
       },
-      cancelled: { 
-        gradient: 'from-gray-50 to-slate-50', 
+      cancelled: {
+        gradient: 'from-gray-50 to-slate-50',
         badge: 'bg-gray-100 text-gray-800 border-gray-300',
-        text: 'Anulat', 
-        icon: '🚫' 
+        text: 'Anulat',
+        icon: '🚫'
       },
     };
-    
+
     return configs[status] || configs.pending;
   };
 
@@ -208,15 +208,14 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
             </p>
           )}
         </div>
-        
+
         {/* Payment Status Indicator */}
-        <div className={`px-5 py-3 rounded-xl border-2 ${
-          remainingAmount <= 0 
-            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300' 
-            : remainingAmount < totalAmount 
-            ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300'
-            : 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300'
-        }`}>
+        <div className={`px-5 py-3 rounded-xl border-2 ${remainingAmount <= 0
+            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+            : remainingAmount < totalAmount
+              ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300'
+              : 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300'
+          }`}>
           <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
             {remainingAmount <= 0 ? 'Plătit Complet' : 'Rămas de Plată'}
           </div>
@@ -224,13 +223,12 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
             <span className="text-2xl">
               {remainingAmount <= 0 ? '✅' : remainingAmount < totalAmount ? '⚠️' : '💰'}
             </span>
-            <span className={`text-2xl font-bold ${
-              remainingAmount <= 0 
-                ? 'text-green-700' 
-                : remainingAmount < totalAmount 
-                ? 'text-yellow-700'
-                : 'text-red-700'
-            }`}>
+            <span className={`text-2xl font-bold ${remainingAmount <= 0
+                ? 'text-green-700'
+                : remainingAmount < totalAmount
+                  ? 'text-yellow-700'
+                  : 'text-red-700'
+              }`}>
               {remainingAmount <= 0 ? '0.00' : remainingAmount.toFixed(2)} €
             </span>
           </div>
@@ -238,9 +236,8 @@ export default function BookingDetailsClient({ booking }: BookingDetailsClientPr
             <div className="mt-1">
               <div className="w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-500 ${
-                    paymentProgress >= 50 ? 'bg-green-500' : 'bg-yellow-500'
-                  }`}
+                  className={`h-full transition-all duration-500 ${paymentProgress >= 50 ? 'bg-green-500' : 'bg-yellow-500'
+                    }`}
                   style={{ width: `${Math.min(paymentProgress, 100)}%` }}
                 />
               </div>

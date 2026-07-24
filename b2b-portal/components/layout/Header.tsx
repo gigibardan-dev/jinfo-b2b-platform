@@ -110,6 +110,17 @@ export default function Header({ role = null }: HeaderProps) {
                 <span>Toate circuitele</span>
               </Link>
             )}
+            {pathname !== '/circuits' && (
+              <Link
+                href="https://jinfocruise.ro/croaziere/search"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-cyan-500 transition-colors font-medium rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-lg">🚢</span>
+                <span>Toate croazierele</span>
+              </Link>
+            )}
             <Link
               href="/calendar"
               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pathname === '/calendar'
@@ -239,8 +250,8 @@ export default function Header({ role = null }: HeaderProps) {
                 href="/calendar"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${pathname === '/calendar'
-                    ? 'bg-orange-500 text-white'
-                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
                   }`}
               >
                 <span className="text-xl">📅</span>

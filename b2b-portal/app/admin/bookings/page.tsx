@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserRole } from '@/lib/auth/utils';
 import { createClient } from '@/lib/supabase/server';
 import AdminBookingCard from '@/components/admin/AdminBookingCard';
+import AdminCruiseBookingCard from '@/components/admin/AdminCruiseBookingCard';
 import Link from 'next/link';
 
 async function getAllBookings() {
@@ -41,12 +42,37 @@ async function getAllBookings() {
   return bookings || [];
 }
 
+async function getAllCruiseBookings() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('cruise_bookings')
+    .select(`
+      *,
+      agencies (
+        id,
+        company_name,
+        contact_person,
+        email,
+        phone
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching cruise bookings:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 const ITEMS_PER_PAGE = 10;
 
 export default async function AdminBookingsPage({
   searchParams
 }: {
-  searchParams: Promise<{ filter?: string; search?: string; page?: string }>;
+  searchParams: Promise<{ filter?: string; search?: string; page?: string; tab?: string }>;
 }) {
   const user = await getCurrentUser();
   
@@ -60,24 +86,27 @@ export default async function AdminBookingsPage({
     redirect('/dashboard');
   }
 
-  const bookings = await getAllBookings();
-  const { filter, search, page } = await searchParams;
+  const { filter, search, page, tab } = await searchParams;
+  const activeTab = tab === 'cruises' ? 'cruises' : 'circuits';
   const currentPage = parseInt(page || '1', 10);
 
-  // Filter by status
+  const [bookings, cruiseBookings] = await Promise.all([
+    getAllBookings(),
+    getAllCruiseBookings(),
+  ]);
+
+  // ── Filtrare circuite ─────────────────────────────────────────────────────
   let filteredBookings = filter && filter !== 'all' 
     ? bookings.filter((b: any) => b.status === filter)
     : bookings;
 
-  // Search filter
   if (search && search.trim()) {
     const searchLower = search.toLowerCase().trim();
     filteredBookings = filteredBookings.filter((b: any) => {
-      const circuitName = b.circuits?.name?.toLowerCase() || '';
-      const agencyName = b.agencies?.company_name?.toLowerCase() || '';
+      const circuitName   = b.circuits?.name?.toLowerCase() || '';
+      const agencyName    = b.agencies?.company_name?.toLowerCase() || '';
       const bookingNumber = b.booking_number?.toLowerCase() || '';
       const contactPerson = b.agencies?.contact_person?.toLowerCase() || '';
-      
       return (
         circuitName.includes(searchLower) ||
         agencyName.includes(searchLower) ||
@@ -87,29 +116,55 @@ export default async function AdminBookingsPage({
     });
   }
 
-  // Pagination
-  const totalItems = filteredBookings.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+  // ── Filtrare croaziere ────────────────────────────────────────────────────
+  let filteredCruises = filter && filter !== 'all'
+    ? cruiseBookings.filter((b: any) => b.status === filter)
+    : cruiseBookings;
 
-  // Stats
-  const stats = {
-    total: bookings.length,
-    pending: bookings.filter((b: any) => b.status === 'pending').length,
-    approved: bookings.filter((b: any) => b.status === 'approved').length,
-    rejected: bookings.filter((b: any) => b.status === 'rejected').length,
+  if (search && search.trim()) {
+    const searchLower = search.toLowerCase().trim();
+    filteredCruises = filteredCruises.filter((b: any) =>
+      b.ship_name?.toLowerCase().includes(searchLower) ||
+      b.agencies?.company_name?.toLowerCase().includes(searchLower) ||
+      b.booking_number?.toLowerCase().includes(searchLower) ||
+      b.jinfocruise_jinfo_no?.toLowerCase().includes(searchLower) ||
+      b.itin_desc?.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // ── Paginare ──────────────────────────────────────────────────────────────
+  const activeList     = activeTab === 'cruises' ? filteredCruises : filteredBookings;
+  const totalItems     = activeList.length;
+  const totalPages     = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const startIndex     = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedItems = activeList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const circuitStats = {
+    total:     bookings.length,
+    pending:   bookings.filter((b: any) => b.status === 'pending').length,
+    approved:  bookings.filter((b: any) => b.status === 'approved').length,
+    rejected:  bookings.filter((b: any) => b.status === 'rejected').length,
     cancelled: bookings.filter((b: any) => b.status === 'cancelled').length,
   };
 
+  const cruiseStats = {
+    total:     cruiseBookings.length,
+    pending:   cruiseBookings.filter((b: any) => b.status === 'pending').length,
+    approved:  cruiseBookings.filter((b: any) => b.status === 'approved').length,
+    rejected:  cruiseBookings.filter((b: any) => b.status === 'rejected').length,
+    cancelled: cruiseBookings.filter((b: any) => b.status === 'cancelled').length,
+  };
+
+  const stats = activeTab === 'cruises' ? cruiseStats : circuitStats;
+
   // Build query params helper
   const buildQueryParams = (params: Record<string, string | undefined>) => {
-    const searchParams = new URLSearchParams();
+    const sp = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) searchParams.set(key, value);
+      if (value) sp.set(key, value);
     });
-    return searchParams.toString();
+    return sp.toString();
   };
 
   return (
@@ -123,7 +178,7 @@ export default async function AdminBookingsPage({
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-1">
-                Gestionare Pre-Rezervări
+                Gestionare Rezervări
               </h1>
               <p className="text-blue-100 text-sm">
                 Vizualizează și gestionează toate rezervările din platformă
@@ -131,6 +186,52 @@ export default async function AdminBookingsPage({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-2 flex gap-2">
+        <Link
+          href={`/admin/bookings?${buildQueryParams({ tab: 'circuits', filter, search })}`}
+          className={`flex-1 flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-semibold transition-all ${
+            activeTab === 'circuits'
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <span className="text-xl">🗺️</span>
+          <span>Circuite</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+            activeTab === 'circuits' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+          }`}>
+            {circuitStats.total}
+          </span>
+          {circuitStats.pending > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 font-bold">
+              {circuitStats.pending} noi
+            </span>
+          )}
+        </Link>
+        <Link
+          href={`/admin/bookings?${buildQueryParams({ tab: 'cruises', filter, search })}`}
+          className={`flex-1 flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-semibold transition-all ${
+            activeTab === 'cruises'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <span className="text-xl">🚢</span>
+          <span>Croaziere</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+            activeTab === 'cruises' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+          }`}>
+            {cruiseStats.total}
+          </span>
+          {cruiseStats.pending > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 font-bold">
+              {cruiseStats.pending} noi
+            </span>
+          )}
+        </Link>
       </div>
 
       {/* Filter Stats */}
@@ -141,7 +242,7 @@ export default async function AdminBookingsPage({
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Link
-            href={`/admin/bookings?${buildQueryParams({ filter: 'all', search })}`}
+            href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter: 'all', search })}`}
             className={`group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border-2 ${
               !filter || filter === 'all' 
                 ? 'border-gray-400 ring-2 ring-gray-200' 
@@ -158,7 +259,7 @@ export default async function AdminBookingsPage({
           </Link>
           
           <Link
-            href={`/admin/bookings?${buildQueryParams({ filter: 'pending', search })}`}
+            href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter: 'pending', search })}`}
             className={`group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border-2 ${
               filter === 'pending' 
                 ? 'border-yellow-400 ring-2 ring-yellow-200' 
@@ -175,7 +276,7 @@ export default async function AdminBookingsPage({
           </Link>
           
           <Link
-            href={`/admin/bookings?${buildQueryParams({ filter: 'approved', search })}`}
+            href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter: 'approved', search })}`}
             className={`group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border-2 ${
               filter === 'approved' 
                 ? 'border-green-400 ring-2 ring-green-200' 
@@ -192,7 +293,7 @@ export default async function AdminBookingsPage({
           </Link>
           
           <Link
-            href={`/admin/bookings?${buildQueryParams({ filter: 'rejected', search })}`}
+            href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter: 'rejected', search })}`}
             className={`group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border-2 ${
               filter === 'rejected' 
                 ? 'border-red-400 ring-2 ring-red-200' 
@@ -209,7 +310,7 @@ export default async function AdminBookingsPage({
           </Link>
           
           <Link
-            href={`/admin/bookings?${buildQueryParams({ filter: 'cancelled', search })}`}
+            href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter: 'cancelled', search })}`}
             className={`group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border-2 ${
               filter === 'cancelled' 
                 ? 'border-gray-400 ring-2 ring-gray-200' 
@@ -230,6 +331,7 @@ export default async function AdminBookingsPage({
       {/* Search Bar */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4">
         <form action="/admin/bookings" method="GET" className="flex gap-3">
+          <input type="hidden" name="tab" value={activeTab} />
           <input type="hidden" name="filter" value={filter || 'all'} />
           <div className="flex-1 relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -239,7 +341,11 @@ export default async function AdminBookingsPage({
               type="text"
               name="search"
               defaultValue={search || ''}
-              placeholder="Caută după circuit, agenție, număr rezervare..."
+              placeholder={
+                activeTab === 'cruises'
+                  ? 'Caută după navă, agenție, număr rezervare...'
+                  : 'Caută după circuit, agenție, număr rezervare...'
+              }
               className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
@@ -251,7 +357,7 @@ export default async function AdminBookingsPage({
           </button>
           {search && (
             <Link
-              href={`/admin/bookings?${buildQueryParams({ filter })}`}
+              href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter })}`}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-semibold"
             >
               Resetează
@@ -264,9 +370,13 @@ export default async function AdminBookingsPage({
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">📝</span>
+            <span className="text-xl">{activeTab === 'cruises' ? '🚢' : '📝'}</span>
             <h2 className="text-xl font-bold text-gray-900">
-              {filter && filter !== 'all' 
+              {activeTab === 'cruises'
+                ? filter && filter !== 'all'
+                  ? `Croaziere ${filter === 'pending' ? 'în Așteptare' : filter === 'approved' ? 'Aprobate' : filter === 'rejected' ? 'Respinse' : 'Anulate'}`
+                  : 'Toate Rezervările Croaziere'
+                : filter && filter !== 'all'
                 ? `Rezervări ${filter === 'pending' ? 'în Așteptare' : filter === 'approved' ? 'Aprobate' : filter === 'rejected' ? 'Respinse' : 'Anulate'}`
                 : 'Toate Rezervările'}
             </h2>
@@ -282,26 +392,30 @@ export default async function AdminBookingsPage({
           )}
         </div>
 
-        {paginatedBookings.length === 0 ? (
+        {paginatedItems.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-            <div className="text-6xl mb-4">📭</div>
+            <div className="text-6xl mb-4">{activeTab === 'cruises' ? '🚢' : '📭'}</div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Nicio Pre-Rezervare
+              {activeTab === 'cruises' ? 'Nicio Rezervare Croazieră' : 'Nicio Pre-Rezervare'}
             </h3>
             <p className="text-gray-600">
               {search 
                 ? `Nu s-au găsit rezultate pentru "${search}"`
                 : filter && filter !== 'all' 
-                ? `Nu există pre-rezervări cu statusul "${filter}"`
+                ? `Nu există rezervări cu statusul "${filter}"`
+                : activeTab === 'cruises'
+                ? 'Nu există rezervări croaziere în sistem'
                 : 'Nu există pre-rezervări în sistem'}
             </p>
           </div>
         ) : (
           <>
             <div className="space-y-4">
-              {paginatedBookings.map((booking: any) => (
-                <AdminBookingCard key={booking.id} booking={booking} />
-              ))}
+              {paginatedItems.map((booking: any) =>
+                activeTab === 'cruises'
+                  ? <AdminCruiseBookingCard key={booking.id} booking={booking} />
+                  : <AdminBookingCard key={booking.id} booking={booking} />
+              )}
             </div>
 
             {/* Pagination */}
@@ -309,7 +423,7 @@ export default async function AdminBookingsPage({
               <div className="mt-6 flex items-center justify-center gap-2">
                 {currentPage > 1 && (
                   <Link
-                    href={`/admin/bookings?${buildQueryParams({ filter, search, page: (currentPage - 1).toString() })}`}
+                    href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter, search, page: (currentPage - 1).toString() })}`}
                     className="px-4 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all font-semibold"
                   >
                     ← Anterior
@@ -318,7 +432,6 @@ export default async function AdminBookingsPage({
                 
                 <div className="flex gap-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                    // Show first page, last page, current page, and pages around current
                     if (
                       pageNum === 1 ||
                       pageNum === totalPages ||
@@ -327,7 +440,7 @@ export default async function AdminBookingsPage({
                       return (
                         <Link
                           key={pageNum}
-                          href={`/admin/bookings?${buildQueryParams({ filter, search, page: pageNum.toString() })}`}
+                          href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter, search, page: pageNum.toString() })}`}
                           className={`w-10 h-10 flex items-center justify-center rounded-lg font-semibold transition-all ${
                             pageNum === currentPage
                               ? 'bg-blue-500 text-white shadow-md'
@@ -353,7 +466,7 @@ export default async function AdminBookingsPage({
 
                 {currentPage < totalPages && (
                   <Link
-                    href={`/admin/bookings?${buildQueryParams({ filter, search, page: (currentPage + 1).toString() })}`}
+                    href={`/admin/bookings?${buildQueryParams({ tab: activeTab, filter, search, page: (currentPage + 1).toString() })}`}
                     className="px-4 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all font-semibold"
                   >
                     Următor →

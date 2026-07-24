@@ -102,6 +102,22 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
         console.error('Error creating user profile:', profileError);
       }
 
+      // Sync spre jinfocruise — fire-and-forget
+      fetch('/api/admin/sync-to-jinfocruise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          company_name: formData.company_name,
+          contact_person: formData.contact_person,
+          phone: formData.phone,
+          commission_pct: parseFloat(formData.commission_rate),
+          password: formData.password,  
+
+        }),
+      }).catch(err => console.error('[CreateAgency] Sync jinfocruise error:', err));
+      // ── Sfârșit adăugare ───────────────────────────────────────────
+
       setSuccess(true);
 
       setTimeout(() => {
@@ -141,6 +157,7 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
         </h3>
         <p className="text-gray-600 mb-4">
           Agenția <span className="font-bold text-green-600">{formData.company_name}</span> a fost creată și activată.
+          <p className="text-sm text-gray-500">Cont creat automat și în JinfoCruise cu aceleasi credentiale.</p>
         </p>
         <p className="text-sm text-gray-500">
           Formularul se va reseta automat în 3 secunde...

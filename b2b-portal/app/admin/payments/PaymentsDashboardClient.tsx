@@ -161,21 +161,19 @@ export default function PaymentsDashboardClient({ payments, bookings, stats }: P
       <div className="flex items-center gap-2 bg-white rounded-xl shadow-md border border-gray-200 p-2">
         <button
           onClick={() => setActiveTab('payments')}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
-            activeTab === 'payments'
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'payments'
               ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md'
               : 'text-gray-600 hover:bg-gray-50'
-          }`}
+            }`}
         >
           💳 Istoric Plăți ({payments.length})
         </button>
         <button
           onClick={() => setActiveTab('bookings')}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
-            activeTab === 'bookings'
+          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'bookings'
               ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
               : 'text-gray-600 hover:bg-gray-50'
-          }`}
+            }`}
         >
           📋 Status Rezervări ({bookings.length})
         </button>
@@ -330,7 +328,9 @@ export default function PaymentsDashboardClient({ payments, bookings, stats }: P
                       </td>
                       <td className="px-6 py-4">
                         <Link
-                          href={`/admin/bookings/${booking.id}`}
+                          href={booking.isCruise
+                            ? `/admin/bookings/cruise/${booking.id}`
+                            : `/admin/bookings/${booking.id}`}
                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold text-sm"
                         >
                           Vezi Detalii
