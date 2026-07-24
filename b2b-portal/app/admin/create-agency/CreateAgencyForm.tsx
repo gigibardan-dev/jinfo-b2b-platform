@@ -103,14 +103,14 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
       }
 
       // Sync spre jinfocruise — fire-and-forget
-      
+
       const { data: { session } } = await supabase.auth.getSession();
 
       fetch('/api/admin/sync-to-jinfocruise', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+          'X-Sync-Secret': 'string_random_pentru_autentificare$$', 
         },
         body: JSON.stringify({
           email: formData.email,
