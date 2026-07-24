@@ -103,17 +103,22 @@ export default function CreateAgencyForm({ adminUserId }: CreateAgencyFormProps)
       }
 
       // Sync spre jinfocruise — fire-and-forget
+      
+      const { data: { session } } = await supabase.auth.getSession();
+
       fetch('/api/admin/sync-to-jinfocruise', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
         body: JSON.stringify({
           email: formData.email,
           company_name: formData.company_name,
           contact_person: formData.contact_person,
           phone: formData.phone,
           commission_pct: parseFloat(formData.commission_rate),
-          password: formData.password,  
-
+          password: formData.password,
         }),
       }).catch(err => console.error('[CreateAgency] Sync jinfocruise error:', err));
       // ── Sfârșit adăugare ───────────────────────────────────────────
