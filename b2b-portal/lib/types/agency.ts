@@ -3,7 +3,9 @@ export type AgencyStatus = 'active' | 'pending' | 'suspended';
 export interface Agency {
   id: string;
   user_id: string;
-  company_name: string;
+  company_name: string;           // Denumire legală/fiscală: ex. SC Jinfo Tours SRL
+  agency_display_name?: string;   // Nume comercial: ex. J'Info Tours — apare pe oferte
+  logo_url?: string;              // URL logo din Supabase Storage
   trade_register: string;
   registration_number?: string;
   contact_person: string;
@@ -25,7 +27,7 @@ export interface Agency {
   admin_notes?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Computed fields from joins
   total_bookings?: number;
   pending_bookings?: number;
@@ -47,6 +49,8 @@ export interface UpdateAgencyData {
   contact_person?: string;
   phone?: string;
   admin_notes?: string;
+  agency_display_name?: string;
+  logo_url?: string;
 }
 
 export interface AgencySummary {

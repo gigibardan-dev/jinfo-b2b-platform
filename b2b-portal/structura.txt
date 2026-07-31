@@ -5,6 +5,8 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |  ├── agencies
 |  |  |  └── page.tsx
 |  |  ├── bookings
+|  |  |  ├── cruise
+|  |  |  |  └── [id]
 |  |  |  ├── page.tsx
 |  |  |  └── [id]
 |  |  |     ├── BookingDetailsClient.tsx
@@ -29,6 +31,8 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |     └── page.tsx
 |  ├── agency
 |  |  ├── bookings
+|  |  |  ├── cruise
+|  |  |  |  └── [id]
 |  |  |  ├── page.tsx
 |  |  |  └── [id]
 |  |  |     ├── AgencyBookingDetailsClient.tsx
@@ -54,14 +58,24 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |  |  |  └── route.ts
 |  |  |  ├── scraping
 |  |  |  |  └── route.ts
-|  |  |  └── staff
-|  |  |     ├── route.ts
-|  |  |     └── [id]
+|  |  |  ├── staff
+|  |  |  |  ├── route.ts
+|  |  |  |  └── [id]
+|  |  |  └── sync-to-jinfocruise
+|  |  |     └── route.ts
 |  |  ├── agency
 |  |  |  └── change-password
 |  |  |     └── route.ts
 |  |  ├── circuits
 |  |  |  └── route.ts
+|  |  ├── cruise-documents
+|  |  |  ├── route.ts
+|  |  |  └── [id]
+|  |  |     └── route.ts
+|  |  ├── cruise-payments
+|  |  |  ├── route.ts
+|  |  |  └── [id]
+|  |  |     └── route.ts
 |  |  ├── departures
 |  |  |  └── route.ts
 |  |  ├── documents
@@ -76,12 +90,16 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |     ├── bookings
 |  |     |  ├── route.ts
 |  |     |  └── [booking_number]
-|  |     └── circuits
-|  |        ├── route.ts
-|  |        └── [slug]
+|  |     ├── circuits
+|  |     |  ├── route.ts
+|  |     |  └── [slug]
+|  |     └── cruise-bookings
+|  |        └── route.ts
 |  ├── auth
 |  |  ├── layout.tsx
 |  |  ├── login
+|  |  |  └── page.tsx
+|  |  ├── pending
 |  |  |  └── page.tsx
 |  |  └── register
 |  |     └── page.tsx
@@ -103,6 +121,7 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 ├── components
 |  ├── admin
 |  |  ├── AdminBookingCard.tsx
+|  |  ├── AdminCruiseBookingCard.tsx
 |  |  ├── agencies
 |  |  |  ├── AgenciesTable.tsx
 |  |  |  ├── AgenciesTableClient.tsx
@@ -121,7 +140,8 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  ├── agency
 |  |  ├── AgencyBookingCard.tsx
 |  |  ├── AgencyBookingCardHorizontal.tsx
-|  |  └── AgencyBookingsClient.tsx
+|  |  ├── AgencyBookingsClient.tsx
+|  |  └── AgencyCruiseBookingCard.tsx
 |  ├── booking
 |  |  └── PreBookingForm.tsx
 |  ├── circuits
@@ -160,6 +180,8 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |  └── utils.ts
 |  ├── services
 |  |  ├── agencies.ts
+|  |  ├── cruise-documents.ts
+|  |  ├── cruise-payments.ts
 |  |  ├── documents.ts
 |  |  └── payments.ts
 |  ├── supabase
@@ -202,7 +224,7 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 ├── structura.txt
 └── tsconfig.json
 
-directory: 1811 file: 14487
+directory: 1822 file: 14498
 
 ignored: directory (157)
 
