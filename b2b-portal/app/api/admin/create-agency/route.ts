@@ -156,32 +156,36 @@ export async function POST(request: NextRequest) {
       console.error('[create-agency] user_profiles error:', profileError);
     }
 
-    // 6. Sync spre jinfocruise (fire-and-forget — direct, fără self-call)
+    // 6. Sync spre jinfocruise — await explicit ca Vercel să nu taie execuția
     const jinfocruiseUrl = process.env.JINFOCRUISE_URL;
     const b2bApiKey = process.env.JINFO_API_KEY;
 
     if (jinfocruiseUrl && b2bApiKey) {
-      fetch(`${jinfocruiseUrl}/api/b2b/create-agency-account`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-B2B-Secret': b2bApiKey,
-        },
-        body: JSON.stringify({
-          email,
-          company_name,
-          agency_display_name: agency_display_name || null,
-          logo_url: logoUrl,
-          contact_person,
-          phone,
-          commission_pct: commission_rate,
-          password,
-        }),
-        signal: AbortSignal.timeout(10_000),
-      })
-        .then(r => r.json())
-        .then(d => console.log(`[create-agency] Sync jinfocruise: ${d.success ? '✓' : '✗'} ${email}`))
-        .catch(err => console.error('[create-agency] Sync jinfocruise error:', err));
+      try {
+        const syncRes = await fetch(`${jinfocruiseUrl}/api/b2b/create-agency-account`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-B2B-Secret': b2bApiKey,
+          },
+          body: JSON.stringify({
+            email,
+            company_name,
+            agency_display_name: agency_display_name || null,
+            logo_url: logoUrl,
+            contact_person,
+            phone,
+            commission_pct: commission_rate,
+            password,
+          }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        const syncData = await syncRes.json();
+        console.log(`[create-agency] Sync jinfocruise: ${syncData.success ? '✓' : '✗'} ${email}`, syncData);
+      } catch (syncErr) {
+        console.error('[create-agency] Sync jinfocruise error:', syncErr);
+        // Nu blocăm — agenția e creată în B2B, sync-ul poate fi refăcut manual
+      }
     } else {
       console.warn('[create-agency] JINFOCRUISE_URL sau JINFO_API_KEY lipsă — sync skipped');
     }
