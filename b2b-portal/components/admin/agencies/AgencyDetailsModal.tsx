@@ -20,19 +20,19 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const getStatusConfig = (status: string) => {
     const configs = {
-      active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Activ', icon: '✅' },
-      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'În Așteptare', icon: '⏳' },
-      suspended: { bg: 'bg-red-100', text: 'text-red-800', label: 'Suspendat', icon: '🚫' },
-    }
-    return configs[status as keyof typeof configs] || configs.pending
-  }
+      active:    { bg: 'bg-green-100',  text: 'text-green-800',  label: 'Activ',         icon: '✅' },
+      pending:   { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'În Așteptare',  icon: '⏳' },
+      suspended: { bg: 'bg-red-100',    text: 'text-red-800',    label: 'Suspendat',     icon: '🚫' },
+    };
+    return configs[status as keyof typeof configs] || configs.pending;
+  };
 
-  const statusConfig = getStatusConfig(agency.status)
+  const statusConfig = getStatusConfig(agency.status);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -45,11 +45,26 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
         <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 px-8 py-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-2xl">
-                🏢
+              {/* Logo sau icon fallback */}
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                {agency.logo_url ? (
+                  <img
+                    src={agency.logo_url}
+                    alt={`Logo ${agency.agency_display_name || agency.company_name}`}
+                    className="w-full h-full object-contain p-1"
+                  />
+                ) : (
+                  <span className="text-2xl">🏢</span>
+                )}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">{agency.company_name}</h2>
+                {/* Nume agenție (comercial) + denumire firmă */}
+                <h2 className="text-2xl font-bold text-white">
+                  {agency.agency_display_name || agency.company_name}
+                </h2>
+                {agency.agency_display_name && agency.agency_display_name !== agency.company_name && (
+                  <p className="text-purple-200 text-xs mt-0.5">{agency.company_name}</p>
+                )}
                 <p className="text-purple-100 text-sm">Detalii Complete Partener</p>
               </div>
             </div>
@@ -71,6 +86,7 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
         </div>
 
         <div className="p-8 space-y-6">
+
           {/* Company Info */}
           <div>
             <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4">
@@ -78,12 +94,18 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
               Informații Companie
             </h3>
             <div className="grid grid-cols-2 gap-4">
+              {agency.agency_display_name && (
+                <div className="bg-purple-50 rounded-xl p-4 border border-purple-200 md:col-span-2">
+                  <div className="text-xs text-purple-600 font-semibold mb-1">Nume Agenție (pe oferte)</div>
+                  <div className="font-bold text-gray-900">{agency.agency_display_name}</div>
+                </div>
+              )}
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <div className="text-xs text-gray-500 font-semibold mb-1">Registrul Comerțului</div>
+                <div className="text-xs text-gray-500 font-semibold mb-1">CUI</div>
                 <div className="font-bold text-gray-900">{agency.trade_register || 'N/A'}</div>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <div className="text-xs text-gray-500 font-semibold mb-1">CUI / CIF</div>
+                <div className="text-xs text-gray-500 font-semibold mb-1">Nr. Reg. Com.</div>
                 <div className="font-bold text-gray-900">{agency.registration_number || 'N/A'}</div>
               </div>
             </div>
@@ -100,15 +122,17 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
                 <div className="text-xs text-blue-600 font-semibold mb-1">Persoană Contact</div>
                 <div className="font-bold text-gray-900">{agency.contact_person}</div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-3 text-sm flex-wrap">
                 <div className="flex items-center gap-2 text-gray-700">
                   <span>📧</span>
                   <span>{agency.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <span>📞</span>
-                  <span>{agency.phone}</span>
-                </div>
+                {agency.phone && (
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span>📞</span>
+                    <span>{agency.phone}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -120,31 +144,37 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
               Adresă Sediu Social
             </h3>
             <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
-              <p className="text-gray-900">
+              <p className="text-gray-900 leading-relaxed">
                 {agency.billing_address || 'N/A'}<br />
-                {agency.billing_city || 'N/A'}, {agency.billing_county || 'N/A'}<br />
-                {agency.billing_postal_code || 'N/A'}
+                {[agency.billing_city, agency.billing_county].filter(Boolean).join(', ') || 'N/A'}
+                {agency.billing_postal_code && <><br />{agency.billing_postal_code}</>}
               </p>
             </div>
           </div>
 
           {/* Banking Info */}
-          <div>
-            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4">
-              <span className="text-2xl">🏦</span>
-              Date Bancare
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
-                <div className="text-xs text-green-600 font-semibold mb-1">Bancă</div>
-                <div className="font-bold text-gray-900">{agency.bank_name || 'N/A'}</div>
-              </div>
-              <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
-                <div className="text-xs text-green-600 font-semibold mb-1">IBAN</div>
-                <div className="font-mono text-sm text-gray-900">{agency.bank_account || 'N/A'}</div>
+          {(agency.bank_name || agency.bank_account) && (
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 mb-4">
+                <span className="text-2xl">🏦</span>
+                Date Bancare
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {agency.bank_name && (
+                  <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                    <div className="text-xs text-green-600 font-semibold mb-1">Bancă</div>
+                    <div className="font-bold text-gray-900">{agency.bank_name}</div>
+                  </div>
+                )}
+                {agency.bank_account && (
+                  <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                    <div className="text-xs text-green-600 font-semibold mb-1">IBAN</div>
+                    <div className="font-mono text-sm text-gray-900">{agency.bank_account}</div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Statistics */}
           <div>

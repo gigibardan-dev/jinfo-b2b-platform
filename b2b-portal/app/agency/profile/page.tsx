@@ -7,16 +7,11 @@ import Link from 'next/link';
 
 export default async function AgencyProfilePage() {
   const user = await getCurrentUser();
-  
-  if (!user) {
-    redirect('/auth/login');
-  }
+
+  if (!user) redirect('/auth/login');
 
   const role = await getUserRole(user.id);
-
-  if (role !== 'agency') {
-    redirect('/dashboard');
-  }
+  if (role !== 'agency') redirect('/dashboard');
 
   const supabase = await createClient();
   const { data: agencyData, error } = await supabase
@@ -30,12 +25,14 @@ export default async function AgencyProfilePage() {
     redirect('/dashboard');
   }
 
+  const displayName = agencyData.agency_display_name || agencyData.company_name;
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
       <div>
-        <Link 
-          href="/agency" 
+        <Link
+          href="/agency"
           className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition-all font-semibold shadow-md border border-gray-200"
         >
           <span>←</span>
@@ -48,16 +45,26 @@ export default async function AgencyProfilePage() {
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-blue-600 px-8 py-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-3xl">
-              🏢
+            {/* Logo sau icon fallback */}
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+              {agencyData.logo_url ? (
+                <img
+                  src={agencyData.logo_url}
+                  alt={`Logo ${displayName}`}
+                  className="w-full h-full object-contain p-1"
+                />
+              ) : (
+                <span className="text-3xl">🏢</span>
+              )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white mb-1">
-                Profilul Agenției
+              <h1 className="text-3xl font-bold text-white mb-0.5">
+                {displayName}
               </h1>
-              <p className="text-orange-100 text-sm">
-                {agencyData.company_name}
-              </p>
+              {agencyData.agency_display_name && agencyData.agency_display_name !== agencyData.company_name && (
+                <p className="text-orange-200 text-xs mb-0.5">{agencyData.company_name}</p>
+              )}
+              <p className="text-orange-100 text-sm">Profilul Agenției</p>
             </div>
           </div>
         </div>
@@ -71,7 +78,7 @@ export default async function AgencyProfilePage() {
                 Actualizează datele agenției tale
               </h3>
               <p className="text-sm text-blue-800">
-                Asigură-te că toate informațiile sunt corecte și actualizate pentru o colaborare optimă.
+                Asigură-te că toate informațiile sunt corecte și actualizate. Modificările sunt sincronizate automat cu platforma JinfoCruise.
               </p>
             </div>
           </div>
