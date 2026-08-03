@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       .eq('id', user.id)
       .single();
 
-    if (profile?.role !== 'admin' && profile?.role !== 'superadmin' && profile?.role !== 'operator') {
+    if ((['admin', 'superadmin'].includes(profile?.role ?? '')) === false && profile?.role !== 'superadmin' && profile?.role !== 'operator') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

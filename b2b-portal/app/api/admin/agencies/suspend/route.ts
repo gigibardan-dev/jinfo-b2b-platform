@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       .eq('id', user.id)
       .single();
 
-    if (profile?.role !== 'admin') {
+    if ((['admin', 'superadmin'].includes(profile?.role ?? '')) === false) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
