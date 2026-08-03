@@ -156,25 +156,35 @@ export async function POST(request: NextRequest) {
       console.error('[create-agency] user_profiles error:', profileError);
     }
 
-    // 6. Sync spre jinfocruise (fire-and-forget prin route intern)
-    const origin = request.headers.get('origin') ?? '';
-    fetch(`${origin}/api/admin/sync-to-jinfocruise`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sync-Secret': process.env.SYNC_SECRET ?? '',
-      },
-      body: JSON.stringify({
-        email,
-        company_name,
-        agency_display_name: agency_display_name || null,
-        logo_url: logoUrl,
-        contact_person,
-        phone,
-        commission_pct: commission_rate,
-        password,
-      }),
-    }).catch(err => console.error('[create-agency] Sync jinfocruise error:', err));
+    // 6. Sync spre jinfocruise (fire-and-forget — direct, fără self-call)
+    const jinfocruiseUrl = process.env.JINFOCRUISE_URL;
+    const b2bApiKey = process.env.JINFO_API_KEY;
+
+    if (jinfocruiseUrl && b2bApiKey) {
+      fetch(`${jinfocruiseUrl}/api/b2b/create-agency-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-B2B-Secret': b2bApiKey,
+        },
+        body: JSON.stringify({
+          email,
+          company_name,
+          agency_display_name: agency_display_name || null,
+          logo_url: logoUrl,
+          contact_person,
+          phone,
+          commission_pct: commission_rate,
+          password,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      })
+        .then(r => r.json())
+        .then(d => console.log(`[create-agency] Sync jinfocruise: ${d.success ? '✓' : '✗'} ${email}`))
+        .catch(err => console.error('[create-agency] Sync jinfocruise error:', err));
+    } else {
+      console.warn('[create-agency] JINFOCRUISE_URL sau JINFO_API_KEY lipsă — sync skipped');
+    }
 
     return NextResponse.json({
       success: true,
