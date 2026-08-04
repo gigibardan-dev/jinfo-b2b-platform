@@ -48,19 +48,54 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
-    // Salvează URL-ul original pentru redirect după login
     url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-  // ── Rute auth — redirect la dashboard dacă deja logat
+  // ── Rute auth — redirect la dashboard corect după rol
   if (
     pathname.startsWith('/auth/login') ||
     pathname.startsWith('/auth/register')
   ) {
     if (user) {
+      // Determinăm rolul userului pentru redirect corect
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      const role = profile?.role ?? 'agency'
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
+
+      if (role === 'admin' || role === 'superadmin' || role === 'operator') {
+        url.pathname = '/admin/dashboard'
+      } else {
+        url.pathname = '/agency/dashboard'
+      }
+
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // ── Redirect /dashboard generic → dashboard corect per rol
+  if (pathname === '/dashboard') {
+    if (user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      const role = profile?.role ?? 'agency'
+      const url = request.nextUrl.clone()
+
+      if (role === 'admin' || role === 'superadmin' || role === 'operator') {
+        url.pathname = '/admin/dashboard'
+      } else {
+        url.pathname = '/agency/dashboard'
+      }
+
       return NextResponse.redirect(url)
     }
   }
@@ -70,14 +105,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     * - api routes (handled separately)
-     */
     '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

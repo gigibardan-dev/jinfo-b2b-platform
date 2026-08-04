@@ -34,7 +34,7 @@ async function syncAgencyToJinfocruise(agency: {
         phone:          agency.phone,
         commission_pct: agency.commission_rate ?? 10,
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(15_000),
     });
 
     const data = await res.json();
@@ -46,7 +46,6 @@ async function syncAgencyToJinfocruise(agency: {
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("[sync-jinfocruise] Eroare rețea:", msg);
-    // Nu aruncăm eroarea — activarea în b2b rămâne validă chiar dacă sync-ul eșuează
   }
 }
 
@@ -191,10 +190,10 @@ export async function activateAgency(agencyId: string): Promise<void> {
     .single();
 
   const updateData: any = {
-    status:           'active',
-    suspended_at:     null,
+    status:            'active',
+    suspended_at:      null,
     suspension_reason: null,
-    updated_at:       new Date().toISOString(),
+    updated_at:        new Date().toISOString(),
   };
 
   const isFirstActivation = !agency?.approved_at;
@@ -224,16 +223,14 @@ export async function activateAgency(agencyId: string): Promise<void> {
   }
 
   // ── Sync spre jinfocruise (doar la prima activare) ────────────────────────
+  // await explicit — așteptăm să se termine înainte de a returna răspunsul
   if (isFirstActivation && agency?.email) {
-    // Fire-and-forget — nu blocăm răspunsul
-    syncAgencyToJinfocruise({
+    await syncAgencyToJinfocruise({
       email:           agency.email,
       company_name:    agency.company_name,
       contact_person:  agency.contact_person,
       phone:           agency.phone ?? null,
       commission_rate: agency.commission_rate ?? 10,
-    }).catch(err => {
-      console.error("[activateAgency] Sync jinfocruise error:", err);
     });
   }
 }
