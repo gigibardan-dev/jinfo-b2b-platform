@@ -1,3 +1,8 @@
+// app/api/admin/staff/[id]/route.ts — B2B
+// PATCH — schimbă rolul SAU resetează parola (staff + agenții)
+// DELETE — șterge user
+// Dacă userul țintă e agenție și se resetează parola → sync spre JinfoCruise
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
@@ -42,7 +47,7 @@ export async function PATCH(
   const body = await request.json();
   const { role, full_name, newPassword } = body;
 
-  // ── Reset parolă
+  // ── Reset parolă ──────────────────────────────────────────────────────────
   if (newPassword) {
     if (newPassword.length < 8) {
       return NextResponse.json(
@@ -56,14 +61,52 @@ export async function PATCH(
     });
 
     if (error) {
-      console.error('Password reset error:', error);
+      console.error('[staff/id] Password reset error:', error);
       return NextResponse.json({ error: 'Eroare la resetarea parolei' }, { status: 500 });
+    }
+
+    // ── Sync spre JinfoCruise dacă userul e agenție ───────────────────────
+    const { data: targetProfile } = await adminClient
+      .from('user_profiles')
+      .select('role')
+      .eq('id', id)
+      .single();
+
+    if (targetProfile?.role === 'agency') {
+      const { data: { user: targetUser } } = await adminClient.auth.admin.getUserById(id);
+      const agencyEmail = targetUser?.email;
+
+      const jinfocruiseUrl = process.env.JINFOCRUISE_URL;
+      const b2bApiKey = process.env.JINFO_API_KEY;
+
+      if (agencyEmail && jinfocruiseUrl && b2bApiKey) {
+        fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-B2B-Secret': b2bApiKey,
+          },
+          body: JSON.stringify({ email: agencyEmail, password: newPassword }),
+          signal: AbortSignal.timeout(10_000),
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              console.error('[staff/id] Sync JinfoCruise eșuat:', data?.error);
+            } else {
+              console.log(`[staff/id] ✓ Sync parolă JinfoCruise: ${agencyEmail}`);
+            }
+          })
+          .catch((err) => {
+            console.error('[staff/id] Eroare sync JinfoCruise:', err);
+          });
+      }
     }
 
     return NextResponse.json({ success: true });
   }
 
-  // ── Schimbare rol / nume
+  // ── Schimbare rol / nume ──────────────────────────────────────────────────
   if (role && !['admin', 'operator'].includes(role)) {
     return NextResponse.json({ error: 'Rol invalid. Poate fi admin sau operator' }, { status: 400 });
   }
