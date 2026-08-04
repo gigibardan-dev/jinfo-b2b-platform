@@ -2,6 +2,7 @@
 // PATCH — schimbă rolul SAU resetează parola (staff + agenții)
 // DELETE — șterge user
 // Dacă userul țintă e agenție și se resetează parola → sync spre JinfoCruise
+//pentru update si push
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
