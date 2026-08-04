@@ -85,7 +85,7 @@ export default function ResetPasswordModal({
       const response = await fetch(apiEndpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ newPassword, userId }),
       });
 
       const data = await response.json();
