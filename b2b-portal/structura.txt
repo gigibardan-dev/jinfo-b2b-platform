@@ -54,17 +54,27 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 |  |  |  |  └── update
 |  |  |  ├── change-password
 |  |  |  |  └── route.ts
+|  |  |  ├── create-agency
+|  |  |  |  └── route.ts
 |  |  |  ├── discounts
+|  |  |  |  └── route.ts
+|  |  |  ├── logo-upload
 |  |  |  |  └── route.ts
 |  |  |  ├── scraping
 |  |  |  |  └── route.ts
 |  |  |  ├── staff
 |  |  |  |  ├── route.ts
 |  |  |  |  └── [id]
+|  |  |  ├── sync-agency-update
+|  |  |  |  └── route.ts
 |  |  |  └── sync-to-jinfocruise
 |  |  |     └── route.ts
 |  |  ├── agency
-|  |  |  └── change-password
+|  |  |  ├── change-password
+|  |  |  |  └── route.ts
+|  |  |  ├── logo-upload
+|  |  |  |  └── route.ts
+|  |  |  └── sync-profile
 |  |  |     └── route.ts
 |  |  ├── circuits
 |  |  |  └── route.ts
@@ -224,7 +234,7 @@ C:\Users\gheor\Desktop\Jinfo Projects\jinfo b2b\jinfo-b2b-platform\b2b-portal
 ├── structura.txt
 └── tsconfig.json
 
-directory: 1822 file: 14498
+directory: 1827 file: 14503
 
 ignored: directory (157)
 
