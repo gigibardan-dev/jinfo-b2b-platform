@@ -93,26 +93,25 @@ export async function PATCH(request: Request) {
     const b2bApiKey = process.env.JINFO_API_KEY;
 
     if (jinfocruiseUrl && b2bApiKey) {
-      fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-B2B-Secret': b2bApiKey,
-        },
-        body: JSON.stringify({ email: agencyEmail, password: newPassword }),
-        signal: AbortSignal.timeout(10_000),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            console.error('[admin/agencies/reset-password] Sync JinfoCruise eșuat:', data?.error);
-          } else {
-            console.log(`[admin/agencies/reset-password] ✓ Sync JinfoCruise: ${agencyEmail}`);
-          }
-        })
-        .catch((err) => {
-          console.error('[admin/agencies/reset-password] Eroare sync JinfoCruise:', err);
+      try {
+        const syncRes = await fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-B2B-Secret': b2bApiKey,
+          },
+          body: JSON.stringify({ email: agencyEmail, password: newPassword }),
+          signal: AbortSignal.timeout(10_000),
         });
+        if (!syncRes.ok) {
+          const data = await syncRes.json().catch(() => ({}));
+          console.error('[admin/agencies/reset-password] Sync JinfoCruise eșuat:', data?.error);
+        } else {
+          console.log(`[admin/agencies/reset-password] ✓ Sync JinfoCruise: ${agencyEmail}`);
+        }
+      } catch (err) {
+        console.error('[admin/agencies/reset-password] Eroare sync JinfoCruise:', err);
+      }
     } else {
       console.warn('[admin/agencies/reset-password] Env vars lipsă — sync JinfoCruise skipped');
     }

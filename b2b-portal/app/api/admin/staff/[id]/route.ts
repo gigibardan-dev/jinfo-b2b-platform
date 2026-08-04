@@ -2,7 +2,6 @@
 // PATCH — schimbă rolul SAU resetează parola (staff + agenții)
 // DELETE — șterge user
 // Dacă userul țintă e agenție și se resetează parola → sync spre JinfoCruise
-//pentru update si push
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -81,26 +80,25 @@ export async function PATCH(
       const b2bApiKey = process.env.JINFO_API_KEY;
 
       if (agencyEmail && jinfocruiseUrl && b2bApiKey) {
-        fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-B2B-Secret': b2bApiKey,
-          },
-          body: JSON.stringify({ email: agencyEmail, password: newPassword }),
-          signal: AbortSignal.timeout(10_000),
-        })
-          .then(async (res) => {
-            if (!res.ok) {
-              const data = await res.json().catch(() => ({}));
-              console.error('[staff/id] Sync JinfoCruise eșuat:', data?.error);
-            } else {
-              console.log(`[staff/id] ✓ Sync parolă JinfoCruise: ${agencyEmail}`);
-            }
-          })
-          .catch((err) => {
-            console.error('[staff/id] Eroare sync JinfoCruise:', err);
+        try {
+          const syncRes = await fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-B2B-Secret': b2bApiKey,
+            },
+            body: JSON.stringify({ email: agencyEmail, password: newPassword }),
+            signal: AbortSignal.timeout(10_000),
           });
+          if (!syncRes.ok) {
+            const data = await syncRes.json().catch(() => ({}));
+            console.error('[staff/id] Sync JinfoCruise eșuat:', data?.error);
+          } else {
+            console.log(`[staff/id] ✓ Sync parolă JinfoCruise: ${agencyEmail}`);
+          }
+        } catch (err) {
+          console.error('[staff/id] Eroare sync JinfoCruise:', err);
+        }
       }
     }
 

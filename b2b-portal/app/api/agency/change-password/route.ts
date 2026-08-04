@@ -70,29 +70,28 @@ export async function POST(request: Request) {
     const b2bApiKey = process.env.JINFO_API_KEY;
 
     if (jinfocruiseUrl && b2bApiKey && user.email) {
-      fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-B2B-Secret': b2bApiKey,
-        },
-        body: JSON.stringify({
-          email: user.email,
-          password: newPassword,
-        }),
-        signal: AbortSignal.timeout(10_000),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            console.error('[agency/change-password] Sync JinfoCruise eșuat:', data?.error);
-          } else {
-            console.log(`[agency/change-password] ✓ Parolă sincronizată JinfoCruise: ${user.email}`);
-          }
-        })
-        .catch((err) => {
-          console.error('[agency/change-password] Eroare sync JinfoCruise:', err);
+      try {
+        const syncRes = await fetch(`${jinfocruiseUrl}/api/b2b/sync-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-B2B-Secret': b2bApiKey,
+          },
+          body: JSON.stringify({
+            email: user.email,
+            password: newPassword,
+          }),
+          signal: AbortSignal.timeout(10_000),
         });
+        if (!syncRes.ok) {
+          const data = await syncRes.json().catch(() => ({}));
+          console.error('[agency/change-password] Sync JinfoCruise eșuat:', data?.error);
+        } else {
+          console.log(`[agency/change-password] ✓ Parolă sincronizată JinfoCruise: ${user.email}`);
+        }
+      } catch (err) {
+        console.error('[agency/change-password] Eroare sync JinfoCruise:', err);
+      }
     } else {
       console.warn('[agency/change-password] Env vars lipsă — sync JinfoCruise skipped');
     }
