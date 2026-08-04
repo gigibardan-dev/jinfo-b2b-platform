@@ -306,7 +306,7 @@ export function AgenciesTableClient({ agencies, initialStatus }: AgenciesTableCl
         onClose={() => setResetAgency(null)}
         userId={resetAgency?.user_id || ''}
         userName={`${resetAgency?.company_name} (${resetAgency?.email})`}
-        apiEndpoint={resetAgency ? `/api/admin/staff/${resetAgency.user_id}` : ''}
+        apiEndpoint={resetAgency ? `/api/admin/agencies/reset-password` : ''}
       />
     </>
   )
