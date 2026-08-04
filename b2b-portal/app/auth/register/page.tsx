@@ -110,6 +110,7 @@ export default function RegisterPage() {
         .from('agencies')
         .insert({
           id: userId,
+          user_id: userId,   // ← adaugă această linie
           agency_display_name: formData.agency_display_name || null,
           company_name: formData.company_name,
           logo_url: logoUrl,
